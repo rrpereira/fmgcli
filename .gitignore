@@ -1,0 +1,19 @@
+# Binaries and build outputs
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go workspace files
+go.work
+go.work.sum
+
+# Local env files
+.env
+
+# Editor and OS files
+.vscode/
+.DS_Store
