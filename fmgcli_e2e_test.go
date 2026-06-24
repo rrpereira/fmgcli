@@ -18,7 +18,7 @@ func TestE2E_LoginLogout(t *testing.T) {
 	password := os.Getenv("FMG_E2E_PASSWORD")
 
 	if host == "" || user == "" || password == "" {
-		t.Skip("set FMG_E2E_HOST, FMG_E2E_USER and FMG_E2E_PASSWORD to run e2e login/logout test")
+		t.Fatalf("set FMG_E2E_HOST, FMG_E2E_USER and FMG_E2E_PASSWORD to run e2e login/logout test")
 	}
 
 	client := NewUserClient(host, user, password)
