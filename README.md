@@ -77,6 +77,29 @@ func main() {
 go test ./...
 ```
 
+### End-to-End Tests
+
+To run the end-to-end tests, you need to set three environment variables:
+
+- `FMG_E2E_HOST` — the FortiManager host URL
+- `FMG_E2E_USER` — the username for authentication
+- `FMG_E2E_PASSWORD` — the password for authentication
+
+You can set these in a `.env` file in the project root, or export them in your shell before running tests:
+
+```bash
+export FMG_E2E_HOST=https://your-fortimanager.example.com
+export FMG_E2E_USER=your-username
+export FMG_E2E_PASSWORD=your-password
+go test -tags=e2e ./...
+```
+
+Or use inline environment variables:
+
+```bash
+FMG_E2E_HOST=https://your-fortimanager.example.com FMG_E2E_USER=your-username FMG_E2E_PASSWORD=your-password go test -tags=e2e ./...
+```
+
 ## Versioning
 
 This project follows semantic versioning.
