@@ -9,6 +9,8 @@ import (
 )
 
 func TestE2E_LoginLogout(t *testing.T) {
+	_ = godotenv.Load()
+
 	host := strings.TrimSpace(os.Getenv("FMG_E2E_HOST"))
 	user := strings.TrimSpace(os.Getenv("FMG_E2E_USER"))
 	password := os.Getenv("FMG_E2E_PASSWORD")
