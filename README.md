@@ -2,8 +2,6 @@
 
 Go client for FortiManager JSON-RPC APIs.
 
-`fmgcli` is extracted from an internal implementation and published as a standalone module for reuse.
-
 ## Features
 
 - User/password login flow and API key flow
