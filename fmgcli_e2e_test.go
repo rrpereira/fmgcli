@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/joho/godotenv"
 )
 
 func TestE2E_LoginLogout(t *testing.T) {
