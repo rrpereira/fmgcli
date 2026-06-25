@@ -72,22 +72,11 @@ func TestE2E_LockUnlock(t *testing.T) {
 
 	client := NewAPIClient(host, token)
 
-	locked := false
-	defer func() {
-		if locked {
-			if err := client.Unlock(adom); err != nil {
-				t.Errorf("deferred unlock cleanup failed for ADOM %q: %v", adom, err)
-			}
-		}
-	}()
-
 	if err := client.Lock(adom); err != nil {
 		t.Fatalf("lock failed for ADOM %q: %v", adom, err)
 	}
-	locked = true
 
 	if err := client.Unlock(adom); err != nil {
 		t.Fatalf("unlock failed for ADOM %q: %v", adom, err)
 	}
-	locked = false
 }
