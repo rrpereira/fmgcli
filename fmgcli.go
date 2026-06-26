@@ -190,13 +190,13 @@ type GetServicesResp struct {
 }
 
 type GetAddressData struct {
-	DynamicMapping []string               `json:"dynamic_mapping"` ////////todo check if this is a list of strings
-	List           []string               `json:"list"`            /////////todo check if this is a list of strings
+	DynamicMapping interface{}            `json:"dynamic_mapping"`
+	List           interface{}            `json:"list"`
 	Metafields     map[string]interface{} `json:"meta fields"`
 	Name           string                 `json:"name"`
 	Oid            int                    `json:"oid"`
 	Subnet         []string               `json:"subnet"`
-	Tagging        []string               `json:"tagging"` ////////todo check if this is a list of strings
+	Tagging        interface{}            `json:"tagging"`
 }
 
 type GetAddressResult struct {
