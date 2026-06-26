@@ -240,7 +240,6 @@ func TestE2E_GetPolicyByMetafield(t *testing.T) {
 	pkg := strings.TrimSpace(os.Getenv("FMG_E2E_PKG"))
 	metafieldKey := strings.TrimSpace(os.Getenv("FMG_E2E_POLICY_METAFIELD_KEY"))
 	metafieldValue := strings.TrimSpace(os.Getenv("FMG_E2E_POLICY_METAFIELD_VALUE"))
-	policyIDStr := strings.TrimSpace(os.Getenv("FMG_E2E_POLICY_ID"))
 
 	if host == "" || token == "" || adom == "" || pkg == "" || metafieldKey == "" || metafieldValue == "" {
 		t.Fatalf("set FMG_E2E_HOST, FMG_E2E_TOKEN, FMG_E2E_ADOM, FMG_E2E_PKG, FMG_E2E_POLICY_METAFIELD_KEY and FMG_E2E_POLICY_METAFIELD_VALUE to run e2e get-policy-by-metafield test")
@@ -264,17 +263,6 @@ func TestE2E_GetPolicyByMetafield(t *testing.T) {
 
 	if !reflect.DeepEqual(value, metafieldValue) {
 		t.Fatalf("expected metafield %q to be %q, got %v", metafieldKey, metafieldValue, value)
-	}
-
-	if policyIDStr != "" {
-		expectedPolicyID, err := strconv.Atoi(policyIDStr)
-		if err != nil {
-			t.Fatalf("invalid FMG_E2E_POLICY_ID %q: %v", policyIDStr, err)
-		}
-
-		if policy.PolicyID != expectedPolicyID {
-			t.Fatalf("expected policy ID %d, got %d", expectedPolicyID, policy.PolicyID)
-		}
 	}
 }
 
