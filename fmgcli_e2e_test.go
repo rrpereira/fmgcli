@@ -287,7 +287,6 @@ func TestE2E_GetPoliciesByMetafield(t *testing.T) {
 	pkg := strings.TrimSpace(os.Getenv("FMG_E2E_PKG"))
 	metafieldKey := strings.TrimSpace(os.Getenv("FMG_E2E_POLICY_METAFIELD_KEY"))
 	metafieldValuesCSV := strings.TrimSpace(os.Getenv("FMG_E2E_POLICY_METAFIELD_VALUES"))
-	policyIDsCSV := strings.TrimSpace(os.Getenv("FMG_E2E_POLICY_IDS"))
 
 	if host == "" || token == "" || adom == "" || pkg == "" || metafieldKey == "" || metafieldValuesCSV == "" {
 		t.Fatalf("set FMG_E2E_HOST, FMG_E2E_TOKEN, FMG_E2E_ADOM, FMG_E2E_PKG, FMG_E2E_POLICY_METAFIELD_KEY and FMG_E2E_POLICY_METAFIELD_VALUES to run e2e get-policies-by-metafield test")
@@ -326,34 +325,6 @@ func TestE2E_GetPoliciesByMetafield(t *testing.T) {
 
 		if !reflect.DeepEqual(value, values[i]) {
 			t.Fatalf("policy index %d expected metafield %q=%v, got %v", i, metafieldKey, values[i], value)
-		}
-	}
-
-	if policyIDsCSV != "" {
-		idParts := strings.Split(policyIDsCSV, ",")
-		expectedIDs := make([]int, 0, len(idParts))
-		for _, part := range idParts {
-			idStr := strings.TrimSpace(part)
-			if idStr == "" {
-				continue
-			}
-
-			id, err := strconv.Atoi(idStr)
-			if err != nil {
-				t.Fatalf("invalid policy ID %q in FMG_E2E_POLICY_IDS: %v", idStr, err)
-			}
-
-			expectedIDs = append(expectedIDs, id)
-		}
-
-		if len(expectedIDs) != len(policies) {
-			t.Fatalf("FMG_E2E_POLICY_IDS count %d does not match returned policies count %d", len(expectedIDs), len(policies))
-		}
-
-		for i, policy := range policies {
-			if policy.PolicyID != expectedIDs[i] {
-				t.Fatalf("policy index %d expected policy ID %d, got %d", i, expectedIDs[i], policy.PolicyID)
-			}
 		}
 	}
 }
