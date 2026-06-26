@@ -328,3 +328,129 @@ func TestE2E_GetPoliciesByMetafield(t *testing.T) {
 		}
 	}
 }
+
+func TestE2E_GetAddressByMetafield(t *testing.T) {
+	_ = godotenv.Load()
+
+	host := strings.TrimSpace(os.Getenv("FMG_E2E_HOST"))
+	token := strings.TrimSpace(os.Getenv("FMG_E2E_TOKEN"))
+	adom := strings.TrimSpace(os.Getenv("FMG_E2E_ADOM"))
+	metafieldKey := strings.TrimSpace(os.Getenv("FMG_E2E_ADDRESS_METAFIELD_KEY"))
+	metafieldValue := strings.TrimSpace(os.Getenv("FMG_E2E_ADDRESS_METAFIELD_VALUE"))
+
+	if host == "" || token == "" || adom == "" || metafieldKey == "" || metafieldValue == "" {
+		t.Fatalf("set FMG_E2E_HOST, FMG_E2E_TOKEN, FMG_E2E_ADOM, FMG_E2E_ADDRESS_METAFIELD_KEY and FMG_E2E_ADDRESS_METAFIELD_VALUE to run e2e get-address-by-metafield test")
+	}
+
+	client := NewAPIClient(host, token)
+
+	address, err := client.GetAddressByMetafield(adom, metafieldKey, metafieldValue)
+	if err != nil {
+		t.Fatalf("get address by metafield failed for %q=%q in ADOM %q: %v", metafieldKey, metafieldValue, adom, err)
+	}
+
+	if address == nil {
+		t.Fatal("expected address, got nil")
+	}
+
+	value, ok := address.Metafields[metafieldKey]
+	if !ok {
+		t.Fatalf("expected metafield key %q in returned address", metafieldKey)
+	}
+
+	if !reflect.DeepEqual(value, metafieldValue) {
+		t.Fatalf("expected metafield %q to be %q, got %v", metafieldKey, metafieldValue, value)
+	}
+}
+
+func TestE2E_GetAddressesByMetafield(t *testing.T) {
+	_ = godotenv.Load()
+
+	host := strings.TrimSpace(os.Getenv("FMG_E2E_HOST"))
+	token := strings.TrimSpace(os.Getenv("FMG_E2E_TOKEN"))
+	adom := strings.TrimSpace(os.Getenv("FMG_E2E_ADOM"))
+	metafieldKey := strings.TrimSpace(os.Getenv("FMG_E2E_ADDRESS_METAFIELD_KEY"))
+	metafieldValuesCSV := strings.TrimSpace(os.Getenv("FMG_E2E_ADDRESS_METAFIELD_VALUES"))
+
+	if host == "" || token == "" || adom == "" || metafieldKey == "" || metafieldValuesCSV == "" {
+		t.Fatalf("set FMG_E2E_HOST, FMG_E2E_TOKEN, FMG_E2E_ADOM, FMG_E2E_ADDRESS_METAFIELD_KEY and FMG_E2E_ADDRESS_METAFIELD_VALUES to run e2e get-addresses-by-metafield test")
+	}
+
+	parts := strings.Split(metafieldValuesCSV, ",")
+	values := make([]interface{}, 0, len(parts))
+	for _, part := range parts {
+		value := strings.TrimSpace(part)
+		if value == "" {
+			continue
+		}
+		values = append(values, value)
+	}
+
+	if len(values) == 0 {
+		t.Fatalf("FMG_E2E_ADDRESS_METAFIELD_VALUES %q produced no values", metafieldValuesCSV)
+	}
+
+	client := NewAPIClient(host, token)
+
+	addresses, err := client.GetAddressesByMetafield(adom, metafieldKey, values)
+	if err != nil {
+		t.Fatalf("get addresses by metafield failed for key %q values %v in ADOM %q: %v", metafieldKey, values, adom, err)
+	}
+
+	if len(addresses) != len(values) {
+		t.Fatalf("expected %d addresses, got %d", len(values), len(addresses))
+	}
+
+	for i, address := range addresses {
+		value, ok := address.Metafields[metafieldKey]
+		if !ok {
+			t.Fatalf("address index %d missing metafield key %q", i, metafieldKey)
+		}
+
+		if !reflect.DeepEqual(value, values[i]) {
+			t.Fatalf("address index %d expected metafield %q=%v, got %v", i, metafieldKey, values[i], value)
+		}
+	}
+}
+
+func TestE2E_GetAddressByNameIPAndNetmask(t *testing.T) {
+	_ = godotenv.Load()
+
+	host := strings.TrimSpace(os.Getenv("FMG_E2E_HOST"))
+	token := strings.TrimSpace(os.Getenv("FMG_E2E_TOKEN"))
+	adom := strings.TrimSpace(os.Getenv("FMG_E2E_ADOM"))
+	addressName := strings.TrimSpace(os.Getenv("FMG_E2E_ADDRESS_NAME_IP_NETMASK_NAME"))
+	ip := strings.TrimSpace(os.Getenv("FMG_E2E_ADDRESS_NAME_IP_NETMASK_IP"))
+	netmask := strings.TrimSpace(os.Getenv("FMG_E2E_ADDRESS_NAME_IP_NETMASK_NETMASK"))
+
+	if host == "" || token == "" || adom == "" || addressName == "" || ip == "" || netmask == "" {
+		t.Fatalf("set FMG_E2E_HOST, FMG_E2E_TOKEN, FMG_E2E_ADOM, FMG_E2E_ADDRESS_NAME_IP_NETMASK_NAME, FMG_E2E_ADDRESS_NAME_IP_NETMASK_IP and FMG_E2E_ADDRESS_NAME_IP_NETMASK_NETMASK to run e2e get-address-by-name-ip-netmask test")
+	}
+
+	client := NewAPIClient(host, token)
+
+	address, err := client.GetAddressByNameIPAndNetmask(adom, addressName, ip, netmask)
+	if err != nil {
+		t.Fatalf("get address by name, IP and netmask failed for %q (IP: %s, Netmask: %s) in ADOM %q: %v", addressName, ip, netmask, adom, err)
+	}
+
+	if address == nil {
+		t.Fatalf("expected address %q, got nil", addressName)
+	}
+
+	if address.Name != addressName {
+		t.Fatalf("expected address name %q, got %q", addressName, address.Name)
+	}
+
+	if len(address.Subnet) < 2 {
+		t.Fatalf("expected address to have subnet with at least 2 elements, got %d", len(address.Subnet))
+	}
+
+	if address.Subnet[0] != ip {
+		t.Fatalf("expected IP %q, got %q", ip, address.Subnet[0])
+	}
+
+	if address.Subnet[1] != netmask {
+		t.Fatalf("expected netmask %q, got %q", netmask, address.Subnet[1])
+	}
+}
