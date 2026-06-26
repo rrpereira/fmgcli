@@ -11,6 +11,7 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -1361,12 +1362,18 @@ func (fm *Client) GetServiceByNamePortAndProtocol(adom, name, protocol string, m
 	}
 
 	if protocol == "tcp" {
-		if response.Result[0].Data.Protocol != "TCP/UDP/SCTP" || len(response.Result[0].Data.TCPPortRange) != 1 || (response.Result[0].Data.TCPPortRange[0] != strconv.Itoa(minPort)+"-"+strconv.Itoa(maxPort) && !(maxPort == minPort && response.Result[0].Data.TCPPortRange[0] == strconv.Itoa(minPort))) {
+		if !strings.Contains(response.Result[0].Data.Protocol, "TCP") ||
+			len(response.Result[0].Data.TCPPortRange) != 1 ||
+			(response.Result[0].Data.TCPPortRange[0] != strconv.Itoa(minPort)+"-"+strconv.Itoa(maxPort) &&
+				response.Result[0].Data.TCPPortRange[0] != strconv.Itoa(maxPort-minPort+minPort)) {
 			fm.log.Error("Service does not match TCP port range.", "adom", adom, "name", name, "minPort", minPort, "maxPort", maxPort)
 			return nil, fmt.Errorf("service '%s' does not match TCP port range '%d'-'%d' in ADOM '%s'", name, minPort, maxPort, adom)
 		}
 	} else if protocol == "udp" {
-		if response.Result[0].Data.Protocol != "TCP/UDP/SCTP" || len(response.Result[0].Data.UDPPortRange) != 1 || response.Result[0].Data.UDPPortRange[0] != strconv.Itoa(minPort)+"-"+strconv.Itoa(maxPort) {
+		if !strings.Contains(response.Result[0].Data.Protocol, "UDP") ||
+			len(response.Result[0].Data.UDPPortRange) != 1 ||
+			(response.Result[0].Data.UDPPortRange[0] != strconv.Itoa(minPort)+"-"+strconv.Itoa(maxPort) &&
+				response.Result[0].Data.UDPPortRange[0] != strconv.Itoa(maxPort-minPort+minPort)) {
 			fm.log.Error("Service does not match UDP port range.", "adom", adom, "name", name, "minPort", minPort, "maxPort", maxPort)
 			return nil, fmt.Errorf("service '%s' does not match UDP port range '%d'-'%d' in ADOM '%s'", name, minPort, maxPort, adom)
 		}
