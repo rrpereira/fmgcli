@@ -1554,6 +1554,239 @@ func TestDisablePolicy_Failure_InexistentPolicyWithUserClient(t *testing.T) {
 	}
 }
 
+func TestDeletePolicy_Success_WithUserClient(t *testing.T) {
+	// Expected request headers
+	expectedRequestHeaders := map[string]string{
+		"Content-Type": "application/json",
+	}
+
+	// Expected request body
+	expectedRequestBody := map[string]interface{}{
+		"method": "delete",
+		"params": []interface{}{
+			map[string]interface{}{
+				"url": "/pm/config/adom/test-adom/pkg/test-device/test-vdom/firewall/policy/85",
+			},
+		},
+		"session": "fake-session",
+	}
+
+	// Mocked response body
+	mockResponse := map[string]interface{}{
+		"result": []map[string]interface{}{
+			{
+				"status": map[string]interface{}{
+					"code":    0,
+					"message": "OK",
+				},
+				"url": "/pm/config/adom/test-adom/pkg/test-device/test-vdom/firewall/policy/85",
+			},
+		},
+	}
+
+	// Create a mock server
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Validate the request method
+		if r.Method != http.MethodPost {
+			t.Errorf("Expected method POST, got %s", r.Method)
+		}
+
+		// Validate the request URL
+		if r.URL.Path != "/jsonrpc" {
+			t.Errorf("Expected URL path /jsonrpc, got %s", r.URL.Path)
+		}
+
+		// Validate the request headers
+		for key, expectedValue := range expectedRequestHeaders {
+			actualValue := r.Header.Get(key)
+			if actualValue != expectedValue {
+				t.Errorf("Expected header %s to be %s, got %s", key, expectedValue, actualValue)
+			}
+		}
+
+		// Validate the request body
+		var actualRequestBody map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&actualRequestBody); err != nil {
+			t.Fatalf("Failed to decode request body: %v", err)
+		}
+		if !reflect.DeepEqual(actualRequestBody, expectedRequestBody) {
+			t.Errorf("Expected request body %v, got %v", expectedRequestBody, actualRequestBody)
+		}
+
+		// Write the mocked response
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(mockResponse)
+	}))
+	defer mockServer.Close()
+
+	// Create a new FortiManager client
+	client := NewUserClient(mockServer.URL, "fake-user", "fake-password")
+	client.Session = "fake-session" // Set a fake session
+
+	// Call the DeletePolicy method
+	err := client.DeletePolicy("test-adom", "test-device/test-vdom", 85)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+}
+
+func TestDeletePolicy_Success_WithAPIClient(t *testing.T) {
+	// Expected request headers
+	expectedRequestHeaders := map[string]string{
+		"Content-Type":  "application/json",
+		"Authorization": "Bearer fake-key",
+	}
+
+	// Expected request body
+	expectedRequestBody := map[string]interface{}{
+		"method": "delete",
+		"params": []interface{}{
+			map[string]interface{}{
+				"url": "/pm/config/adom/test-adom/pkg/test-device/test-vdom/firewall/policy/85",
+			},
+		},
+	}
+
+	// Mocked response body
+	mockResponse := map[string]interface{}{
+		"result": []map[string]interface{}{
+			{
+				"status": map[string]interface{}{
+					"code":    0,
+					"message": "OK",
+				},
+				"url": "/pm/config/adom/test-adom/pkg/test-device/test-vdom/firewall/policy/85",
+			},
+		},
+	}
+
+	// Create a mock server
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Validate the request method
+		if r.Method != http.MethodPost {
+			t.Errorf("Expected method POST, got %s", r.Method)
+		}
+
+		// Validate the request URL
+		if r.URL.Path != "/jsonrpc" {
+			t.Errorf("Expected URL path /jsonrpc, got %s", r.URL.Path)
+		}
+
+		// Validate the request headers
+		for key, expectedValue := range expectedRequestHeaders {
+			actualValue := r.Header.Get(key)
+			if actualValue != expectedValue {
+				t.Errorf("Expected header %s to be %s, got %s", key, expectedValue, actualValue)
+			}
+		}
+
+		// Validate the request body
+		var actualRequestBody map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&actualRequestBody); err != nil {
+			t.Fatalf("Failed to decode request body: %v", err)
+		}
+		if !reflect.DeepEqual(actualRequestBody, expectedRequestBody) {
+			t.Errorf("Expected request body %v, got %v", expectedRequestBody, actualRequestBody)
+		}
+
+		// Write the mocked response
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(mockResponse)
+	}))
+	defer mockServer.Close()
+
+	// Create a new FortiManager client
+	client := NewAPIClient(mockServer.URL, "fake-key")
+
+	// Call the DeletePolicy method
+	err := client.DeletePolicy("test-adom", "test-device/test-vdom", 85)
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+}
+
+func TestDeletePolicy_Failure_InexistentPolicyWithUserClient(t *testing.T) {
+	// Expected request headers
+	expectedRequestHeaders := map[string]string{
+		"Content-Type": "application/json",
+	}
+
+	// Expected request body
+	expectedRequestBody := map[string]interface{}{
+		"method": "delete",
+		"params": []interface{}{
+			map[string]interface{}{
+				"url": "/pm/config/adom/test-adom/pkg/test-device/test-vdom/firewall/policy/85",
+			},
+		},
+		"session": "fake-session",
+	}
+
+	// Mocked response body indicating failure
+	mockResponse := map[string]interface{}{
+		"result": []map[string]interface{}{
+			{
+				"status": map[string]interface{}{
+					"code":    -3,
+					"message": "entry not found",
+				},
+				"url": "/pm/config/adom/test-adom/pkg/test-device/test-vdom/firewall/policy/85",
+			},
+		},
+	}
+
+	// Create a mock server
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Validate the request method
+		if r.Method != http.MethodPost {
+			t.Errorf("Expected method POST, got %s", r.Method)
+		}
+
+		// Validate the request URL
+		if r.URL.Path != "/jsonrpc" {
+			t.Errorf("Expected URL path /jsonrpc, got %s", r.URL.Path)
+		}
+
+		// Validate the request headers
+		for key, expectedValue := range expectedRequestHeaders {
+			actualValue := r.Header.Get(key)
+			if actualValue != expectedValue {
+				t.Errorf("Expected header %s to be %s, got %s", key, expectedValue, actualValue)
+			}
+		}
+
+		// Validate the request body
+		var actualRequestBody map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&actualRequestBody); err != nil {
+			t.Fatalf("Failed to decode request body: %v", err)
+		}
+		if !reflect.DeepEqual(actualRequestBody, expectedRequestBody) {
+			t.Errorf("Expected request body %v, got %v", expectedRequestBody, actualRequestBody)
+		}
+
+		// Write the mocked response
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(mockResponse)
+	}))
+	defer mockServer.Close()
+
+	// Create a new FortiManager client
+	client := NewUserClient(mockServer.URL, "fake-user", "fake-password")
+	client.Session = "fake-session" // Set a fake session
+
+	// Call the DeletePolicy method
+	err := client.DeletePolicy("test-adom", "test-device/test-vdom", 85)
+	if err == nil {
+		t.Fatalf("Expected an error, got nil")
+	}
+
+	// Validate the error message
+	expectedErrorMessage := "failed to delete policy: entry not found"
+	if err.Error() != expectedErrorMessage {
+		t.Errorf("Expected error message '%s', got '%s'", expectedErrorMessage, err.Error())
+	}
+}
+
 func TestCreatePolicy_Success_WithUserClient(t *testing.T) {
 	// Expected request headers
 	expectedRequestHeaders := map[string]string{
@@ -1639,7 +1872,7 @@ func TestCreatePolicy_Success_WithUserClient(t *testing.T) {
 	client.Session = "fake-session" // Set a fake session
 
 	// Call the CreatePolicy method
-	err := client.CreatePolicy(
+	policyID, err := client.CreatePolicy(
 		"test-device/test-vdom",
 		"test-adom",
 		"tHis Is a rANdoM cOmmENt",
@@ -1649,6 +1882,10 @@ func TestCreatePolicy_Success_WithUserClient(t *testing.T) {
 	)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if policyID != 12345 {
+		t.Fatalf("Expected policy ID 12345, got %d", policyID)
 	}
 }
 
@@ -1736,7 +1973,7 @@ func TestCreatePolicy_Success_WithAPIClient(t *testing.T) {
 	client := NewAPIClient(mockServer.URL, "fake-key")
 
 	// Call the CreatePolicy method
-	err := client.CreatePolicy(
+	policyID, err := client.CreatePolicy(
 		"test-device/test-vdom",
 		"test-adom",
 		"tHis Is a rANdoM cOmmENt",
@@ -1746,6 +1983,10 @@ func TestCreatePolicy_Success_WithAPIClient(t *testing.T) {
 	)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if policyID != 12345 {
+		t.Fatalf("Expected policy ID 12345, got %d", policyID)
 	}
 }
 
@@ -1839,7 +2080,7 @@ func TestCreatePolicy_Success_WithAPIClientAndMetafields(t *testing.T) {
 	client := NewAPIClient(mockServer.URL, "fake-key")
 
 	// Call the CreatePolicy method
-	err := client.CreatePolicy(
+	policyID, err := client.CreatePolicy(
 		"test-device/test-vdom",
 		"test-adom",
 		"tHis Is a rANdoM cOmmENt",
@@ -1855,6 +2096,10 @@ func TestCreatePolicy_Success_WithAPIClientAndMetafields(t *testing.T) {
 	)
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	if policyID != 12345 {
+		t.Fatalf("Expected policy ID 12345, got %d", policyID)
 	}
 }
 
@@ -1943,7 +2188,7 @@ func TestCreatePolicy_Failure_InexistentSrcAddrWithUserClient(t *testing.T) {
 	client.Session = "fake-session" // Set a fake session
 
 	// Call the CreatePolicy method
-	err := client.CreatePolicy(
+	_, err := client.CreatePolicy(
 		"test-device/test-vdom",
 		"test-adom",
 		"tHis Is a rANdoM cOmmENt",
@@ -2047,7 +2292,7 @@ func TestCreatePolicy_Failure_InexistentSrcAddrWithAPIClient(t *testing.T) {
 	client := NewAPIClient(mockServer.URL, "fake-key")
 
 	// Call the CreatePolicy method
-	err := client.CreatePolicy(
+	_, err := client.CreatePolicy(
 		"test-device/test-vdom",
 		"test-adom",
 		"tHis Is a rANdoM cOmmENt",
@@ -2776,7 +3021,7 @@ func TestGetServiceByMetafield_Success_StringMetafield(t *testing.T) {
 						"name":          "tcp-443",
 						"obj seq":       101,
 						"oid":           5519,
-						"protocol":      "TCP/UDP/SCTP",
+						"protocol":      "TCP/UDP/UDP-Lite/SCTP",
 						"tcp-portrange": []interface{}{"443"},
 						"udp-portrange": []interface{}{},
 						"unset attrs":   []interface{}{"icmptype", "icmpcode"},
@@ -2788,7 +3033,7 @@ func TestGetServiceByMetafield_Success_StringMetafield(t *testing.T) {
 						"name":          "tcp-8080",
 						"obj seq":       92,
 						"oid":           5450,
-						"protocol":      "TCP/UDP/SCTP",
+						"protocol":      "TCP/UDP/UDP-Lite/SCTP",
 						"tcp-portrange": []interface{}{"8080"},
 						"udp-portrange": []interface{}{},
 						"unset attrs":   []interface{}{"icmptype", "icmpcode"},
@@ -2887,7 +3132,7 @@ func TestGetServiceByMetafield_Success_Float64Metafield(t *testing.T) {
 						"name":          "tcp-8080",
 						"obj seq":       92,
 						"oid":           5450,
-						"protocol":      "TCP/UDP/SCTP",
+						"protocol":      "TCP/UDP/UDP-Lite/SCTP",
 						"tcp-portrange": []interface{}{"8080"},
 						"udp-portrange": []interface{}{},
 						"unset attrs":   []interface{}{"icmptype", "icmpcode"},
@@ -2899,7 +3144,7 @@ func TestGetServiceByMetafield_Success_Float64Metafield(t *testing.T) {
 						"name":          "tcp-443",
 						"obj seq":       101,
 						"oid":           5519,
-						"protocol":      "TCP/UDP/SCTP",
+						"protocol":      "TCP/UDP/UDP-Lite/SCTP",
 						"tcp-portrange": []interface{}{"443"},
 						"udp-portrange": []interface{}{},
 						"unset attrs":   []interface{}{"icmptype", "icmpcode"},
@@ -3250,7 +3495,7 @@ func TestGetServiceByMetafield_Failure_NoMatchingService(t *testing.T) {
 						"name":          "tcp-8080",
 						"obj seq":       92,
 						"oid":           5450,
-						"protocol":      "TCP/UDP/SCTP",
+						"protocol":      "TCP/UDP/UDP-Lite/SCTP",
 						"tcp-portrange": []interface{}{"8080"},
 						"udp-portrange": []interface{}{},
 						"unset attrs":   []interface{}{"icmptype", "icmpcode"},
@@ -3262,7 +3507,7 @@ func TestGetServiceByMetafield_Failure_NoMatchingService(t *testing.T) {
 						"name":          "tcp-443",
 						"obj seq":       101,
 						"oid":           5519,
-						"protocol":      "TCP/UDP/SCTP",
+						"protocol":      "TCP/UDP/UDP-Lite/SCTP",
 						"tcp-portrange": []interface{}{"443"},
 						"udp-portrange": []interface{}{},
 						"unset attrs":   []interface{}{"icmptype", "icmpcode"},
@@ -7264,7 +7509,7 @@ func TestCreateService_Success_AddingTCPService(t *testing.T) {
 				"data": []interface{}{
 					map[string]interface{}{
 						"name":          "tcp-8080",
-						"protocol":      "TCP/UDP/SCTP",
+						"protocol":      "TCP/UDP/UDP-Lite/SCTP",
 						"tcp-portrange": []interface{}{"8080-8080"},
 						"comment":       "test comment",
 					},
@@ -7350,7 +7595,7 @@ func TestCreateService_Success_AddingUDPService(t *testing.T) {
 				"data": []interface{}{
 					map[string]interface{}{
 						"name":          "udp-8080",
-						"protocol":      "TCP/UDP/SCTP",
+						"protocol":      "TCP/UDP/UDP-Lite/SCTP",
 						"udp-portrange": []interface{}{"8080-8080"},
 						"comment":       "test comment",
 					},
@@ -7421,6 +7666,218 @@ func TestCreateService_Success_AddingUDPService(t *testing.T) {
 	}
 }
 
+func TestCreateGroup_Success_AddingGroup(t *testing.T) {
+	expectedRequestHeaders := map[string]string{
+		"Content-Type":  "application/json",
+		"Authorization": "Bearer fake-key",
+	}
+
+	expectedRequestBody := map[string]interface{}{
+		"method": "add",
+		"params": []interface{}{
+			map[string]interface{}{
+				"data": []interface{}{
+					map[string]interface{}{
+						"name":        "test-group",
+						"member":      []interface{}{"addr-1", "addr-2"},
+						"comment":     "test comment",
+						"meta fields": map[string]interface{}{"some_uuid": "random-uuid"},
+					},
+				},
+				"url": "/pm/config/adom/test-adom/obj/firewall/addrgrp",
+			},
+		},
+	}
+
+	mockResponse := map[string]interface{}{
+		"result": []map[string]interface{}{
+			{
+				"data": map[string]interface{}{
+					"name": "test-group",
+				},
+				"status": map[string]interface{}{
+					"code":    0,
+					"message": "OK",
+				},
+				"url": "/pm/config/adom/test-adom/obj/firewall/addrgrp",
+			},
+		},
+	}
+
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("Expected method POST, got %s", r.Method)
+		}
+
+		if r.URL.Path != "/jsonrpc" {
+			t.Errorf("Expected URL path /jsonrpc, got %s", r.URL.Path)
+		}
+
+		for key, expectedValue := range expectedRequestHeaders {
+			actualValue := r.Header.Get(key)
+			if actualValue != expectedValue {
+				t.Errorf("Expected header %s to be %s, got %s", key, expectedValue, actualValue)
+			}
+		}
+
+		var actualRequestBody map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&actualRequestBody); err != nil {
+			t.Fatalf("Failed to decode request body: %v", err)
+		}
+		if !reflect.DeepEqual(actualRequestBody, expectedRequestBody) {
+			t.Errorf("Expected request body %v, got %v", expectedRequestBody, actualRequestBody)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(mockResponse)
+	}))
+	defer mockServer.Close()
+
+	client := NewAPIClient(mockServer.URL, "fake-key")
+
+	err := client.CreateGroup("test-adom", "test-group", []string{"addr-1", "addr-2"}, "test comment", WithGroupMetafields(map[string]interface{}{"some_uuid": "random-uuid"}))
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+}
+
+func TestUpdateGroupWithMetafields_Success(t *testing.T) {
+	expectedRequestHeaders := map[string]string{
+		"Content-Type":  "application/json",
+		"Authorization": "Bearer fake-key",
+	}
+
+	expectedRequestBody := map[string]interface{}{
+		"method": "set",
+		"params": []interface{}{
+			map[string]interface{}{
+				"data": []interface{}{
+					map[string]interface{}{
+						"name":        "test-group",
+						"meta fields": map[string]interface{}{"some_uuid": "random-uuid"},
+					},
+				},
+				"url": "/pm/config/adom/test-adom/obj/firewall/addrgrp",
+			},
+		},
+	}
+
+	mockResponse := map[string]interface{}{
+		"result": []map[string]interface{}{
+			{
+				"data": map[string]interface{}{
+					"name": "test-group",
+				},
+				"status": map[string]interface{}{
+					"code":    0,
+					"message": "OK",
+				},
+				"url": "/pm/config/adom/test-adom/obj/firewall/addrgrp/test-group",
+			},
+		},
+	}
+
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("Expected method POST, got %s", r.Method)
+		}
+
+		if r.URL.Path != "/jsonrpc" {
+			t.Errorf("Expected URL path /jsonrpc, got %s", r.URL.Path)
+		}
+
+		for key, expectedValue := range expectedRequestHeaders {
+			actualValue := r.Header.Get(key)
+			if actualValue != expectedValue {
+				t.Errorf("Expected header %s to be %s, got %s", key, expectedValue, actualValue)
+			}
+		}
+
+		var actualRequestBody map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&actualRequestBody); err != nil {
+			t.Fatalf("Failed to decode request body: %v", err)
+		}
+		if !reflect.DeepEqual(actualRequestBody, expectedRequestBody) {
+			t.Errorf("Expected request body %v, got %v", expectedRequestBody, actualRequestBody)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(mockResponse)
+	}))
+	defer mockServer.Close()
+
+	client := NewAPIClient(mockServer.URL, "fake-key")
+
+	err := client.UpdateGroupWithMetafields("test-adom", "test-group", map[string]interface{}{"some_uuid": "random-uuid"})
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+}
+
+func TestDeleteGroup_Success(t *testing.T) {
+	expectedRequestHeaders := map[string]string{
+		"Content-Type":  "application/json",
+		"Authorization": "Bearer fake-key",
+	}
+
+	expectedRequestBody := map[string]interface{}{
+		"method": "delete",
+		"params": []interface{}{
+			map[string]interface{}{
+				"url": "/pm/config/adom/test-adom/obj/firewall/addrgrp/test-group",
+			},
+		},
+	}
+
+	mockResponse := map[string]interface{}{
+		"result": []map[string]interface{}{
+			{
+				"status": map[string]interface{}{
+					"code":    0,
+					"message": "OK",
+				},
+				"url": "/pm/config/adom/test-adom/obj/firewall/addrgrp/test-group",
+			},
+		},
+	}
+
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("Expected method POST, got %s", r.Method)
+		}
+
+		if r.URL.Path != "/jsonrpc" {
+			t.Errorf("Expected URL path /jsonrpc, got %s", r.URL.Path)
+		}
+
+		for key, expectedValue := range expectedRequestHeaders {
+			actualValue := r.Header.Get(key)
+			if actualValue != expectedValue {
+				t.Errorf("Expected header %s to be %s, got %s", key, expectedValue, actualValue)
+			}
+		}
+
+		var actualRequestBody map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&actualRequestBody); err != nil {
+			t.Fatalf("Failed to decode request body: %v", err)
+		}
+		if !reflect.DeepEqual(actualRequestBody, expectedRequestBody) {
+			t.Errorf("Expected request body %v, got %v", expectedRequestBody, actualRequestBody)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(mockResponse)
+	}))
+	defer mockServer.Close()
+
+	client := NewAPIClient(mockServer.URL, "fake-key")
+
+	err := client.DeleteGroup("test-adom", "test-group")
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+}
+
 func TestCreateService_Failure_InvalidPortRange(t *testing.T) {
 	// Expected request headers
 	expectedRequestHeaders := map[string]string{
@@ -7436,7 +7893,7 @@ func TestCreateService_Failure_InvalidPortRange(t *testing.T) {
 				"data": []interface{}{
 					map[string]interface{}{
 						"name":          "tcp-8080",
-						"protocol":      "TCP/UDP/SCTP",
+						"protocol":      "TCP/UDP/UDP-Lite/SCTP",
 						"tcp-portrange": []interface{}{"8080-8080"},
 						"comment":       "test comment",
 					},
@@ -7528,7 +7985,7 @@ func TestCreateService_Success_AddingTCPServiceWithMetafields(t *testing.T) {
 				"data": []interface{}{
 					map[string]interface{}{
 						"name":          "tcp-8080",
-						"protocol":      "TCP/UDP/SCTP",
+						"protocol":      "TCP/UDP/UDP-Lite/SCTP",
 						"tcp-portrange": []interface{}{"8080-8080"},
 						"comment":       "test comment",
 						"meta fields": map[string]interface{}{
@@ -7629,7 +8086,7 @@ func TestCreateService_Failure_ObjectAlreadyExists(t *testing.T) {
 				"data": []interface{}{
 					map[string]interface{}{
 						"name":          "tcp-8080",
-						"protocol":      "TCP/UDP/SCTP",
+						"protocol":      "TCP/UDP/UDP-Lite/SCTP",
 						"tcp-portrange": []interface{}{"8080-8080"},
 						"comment":       "test comment",
 					},
@@ -10289,7 +10746,7 @@ func TestGetServiceByNamePortRangeAndTCPProtocol_Success(t *testing.T) {
 					"name":          "tcp-8080",
 					"obj seq":       92,
 					"oid":           5450,
-					"protocol":      "TCP/UDP/SCTP",
+					"protocol":      "TCP/UDP/UDP-Lite/SCTP",
 					"tcp-portrange": []interface{}{"8080-8080"},
 					"udp-portrange": []interface{}{},
 					"meta fields": map[string]interface{}{
@@ -10350,8 +10807,8 @@ func TestGetServiceByNamePortRangeAndTCPProtocol_Success(t *testing.T) {
 		t.Errorf("Expected service name 'tcp-8080', got '%s'", service.Name)
 	}
 
-	if service.Protocol != "TCP/UDP/SCTP" {
-		t.Errorf("Expected service protocol 'TCP/UDP/SCTP', got '%s'", service.Protocol)
+	if service.Protocol != "TCP/UDP/UDP-Lite/SCTP" {
+		t.Errorf("Expected service protocol 'TCP/UDP/UDP-Lite/SCTP', got '%s'", service.Protocol)
 	}
 
 	if service.TCPPortRange[0] != "8080-8080" {
@@ -10384,7 +10841,7 @@ func TestGetServiceByNamePortRangeAndUDPProtocol_Success(t *testing.T) {
 					"name":          "udp-8080",
 					"obj seq":       92,
 					"oid":           5450,
-					"protocol":      "TCP/UDP/SCTP",
+					"protocol":      "TCP/UDP/UDP-Lite/SCTP",
 					"tcp-portrange": []interface{}{},
 					"udp-portrange": []interface{}{"8080-8080"},
 					"meta fields": map[string]interface{}{
@@ -10445,8 +10902,8 @@ func TestGetServiceByNamePortRangeAndUDPProtocol_Success(t *testing.T) {
 		t.Errorf("Expected service name 'udp-8080', got '%s'", service.Name)
 	}
 
-	if service.Protocol != "TCP/UDP/SCTP" {
-		t.Errorf("Expected service protocol 'TCP/UDP/SCTP', got '%s'", service.Protocol)
+	if service.Protocol != "TCP/UDP/UDP-Lite/SCTP" {
+		t.Errorf("Expected service protocol 'TCP/UDP/UDP-Lite/SCTP', got '%s'", service.Protocol)
 	}
 
 	if service.UDPPortRange[0] != "8080-8080" {
@@ -10556,7 +11013,7 @@ func TestGetServiceByNamePortRangeAndProtocol_Failure_SameNameAndPortRangeButDif
 					"name":          "tcp-8080",
 					"obj seq":       92,
 					"oid":           5450,
-					"protocol":      "TCP/UDP/SCTP",
+					"protocol":      "TCP/UDP/UDP-Lite/SCTP",
 					"tcp-portrange": []interface{}{},
 					"udp-portrange": []interface{}{"8080-8080"},
 					"meta fields": map[string]interface{}{
@@ -10732,7 +11189,7 @@ func TestGetServiceByNamePortRangeAndProtocol_Failure_SameNameAndTCPProtocolButD
 					"name":          "tcp-8080",
 					"obj seq":       92,
 					"oid":           5450,
-					"protocol":      "TCP/UDP/SCTP",
+					"protocol":      "TCP/UDP/UDP-Lite/SCTP",
 					"tcp-portrange": []interface{}{"8080-8081"},
 					"udp-portrange": []interface{}{},
 					"meta fields": map[string]interface{}{
@@ -10820,7 +11277,7 @@ func TestGetServiceByNamePortRangeAndProtocol_Failure_SameNameAndPortRangeButDif
 					"name":          "udp-8080",
 					"obj seq":       92,
 					"oid":           5450,
-					"protocol":      "TCP/UDP/SCTP",
+					"protocol":      "TCP/UDP/UDP-Lite/SCTP",
 					"tcp-portrange": []interface{}{"8080-8080"},
 					"udp-portrange": []interface{}{},
 					"meta fields": map[string]interface{}{
@@ -10996,7 +11453,7 @@ func TestGetServiceByNamePortRangeAndProtocol_Failure_SameNameAndUDPProtocolButD
 					"name":          "udp-8080",
 					"obj seq":       92,
 					"oid":           5450,
-					"protocol":      "TCP/UDP/SCTP",
+					"protocol":      "TCP/UDP/UDP-Lite/SCTP",
 					"tcp-portrange": []interface{}{},
 					"udp-portrange": []interface{}{"8080-8081"},
 					"meta fields": map[string]interface{}{
@@ -11131,6 +11588,472 @@ func TestGetServiceByNamePortRangeAndProtocol_Failure_NoPermission(t *testing.T)
 	}
 
 	expectedErrorMessage := "error fetching service 'tcp-8080': No permission for the resource"
+	if err.Error() != expectedErrorMessage {
+		t.Errorf("Expected error message '%s', got '%s'", expectedErrorMessage, err.Error())
+	}
+}
+
+func TestDeleteService_Success_WithUserClient(t *testing.T) {
+	// Expected request headers
+	expectedRequestHeaders := map[string]string{
+		"Content-Type": "application/json",
+	}
+
+	// Expected request body
+	expectedRequestBody := map[string]interface{}{
+		"method": "delete",
+		"params": []interface{}{
+			map[string]interface{}{
+				"url": "/pm/config/adom/test-adom/obj/firewall/service/custom/test-service",
+			},
+		},
+		"session": "fake-session",
+	}
+
+	// Mocked response body
+	mockResponse := map[string]interface{}{
+		"result": []map[string]interface{}{
+			{
+				"status": map[string]interface{}{
+					"code":    0,
+					"message": "OK",
+				},
+				"url": "/pm/config/adom/test-adom/obj/firewall/service/custom/test-service",
+			},
+		},
+	}
+
+	// Create a mock server
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Validate the request method
+		if r.Method != http.MethodPost {
+			t.Errorf("Expected method POST, got %s", r.Method)
+		}
+
+		// Validate the request URL
+		if r.URL.Path != "/jsonrpc" {
+			t.Errorf("Expected URL path /jsonrpc, got %s", r.URL.Path)
+		}
+
+		// Validate the request headers
+		for key, expectedValue := range expectedRequestHeaders {
+			actualValue := r.Header.Get(key)
+			if actualValue != expectedValue {
+				t.Errorf("Expected header %s to be %s, got %s", key, expectedValue, actualValue)
+			}
+		}
+
+		// Validate the request body
+		var actualRequestBody map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&actualRequestBody); err != nil {
+			t.Fatalf("Failed to decode request body: %v", err)
+		}
+		if !reflect.DeepEqual(actualRequestBody, expectedRequestBody) {
+			t.Errorf("Expected request body %v, got %v", expectedRequestBody, actualRequestBody)
+		}
+
+		// Write the mocked response
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(mockResponse)
+	}))
+	defer mockServer.Close()
+
+	// Create a new FortiManager client
+	client := NewUserClient(mockServer.URL, "fake-user", "fake-password")
+	client.Session = "fake-session" // Set a fake session
+
+	// Call the DeleteService method
+	err := client.DeleteService("test-adom", "test-service")
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+}
+
+func TestDeleteService_Success_WithAPIClient(t *testing.T) {
+	// Expected request headers
+	expectedRequestHeaders := map[string]string{
+		"Content-Type":  "application/json",
+		"Authorization": "Bearer fake-key",
+	}
+
+	// Expected request body
+	expectedRequestBody := map[string]interface{}{
+		"method": "delete",
+		"params": []interface{}{
+			map[string]interface{}{
+				"url": "/pm/config/adom/test-adom/obj/firewall/service/custom/test-service",
+			},
+		},
+	}
+
+	// Mocked response body
+	mockResponse := map[string]interface{}{
+		"result": []map[string]interface{}{
+			{
+				"status": map[string]interface{}{
+					"code":    0,
+					"message": "OK",
+				},
+				"url": "/pm/config/adom/test-adom/obj/firewall/service/custom/test-service",
+			},
+		},
+	}
+
+	// Create a mock server
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Validate the request method
+		if r.Method != http.MethodPost {
+			t.Errorf("Expected method POST, got %s", r.Method)
+		}
+
+		// Validate the request URL
+		if r.URL.Path != "/jsonrpc" {
+			t.Errorf("Expected URL path /jsonrpc, got %s", r.URL.Path)
+		}
+
+		// Validate the request headers
+		for key, expectedValue := range expectedRequestHeaders {
+			actualValue := r.Header.Get(key)
+			if actualValue != expectedValue {
+				t.Errorf("Expected header %s to be %s, got %s", key, expectedValue, actualValue)
+			}
+		}
+
+		// Validate the request body
+		var actualRequestBody map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&actualRequestBody); err != nil {
+			t.Fatalf("Failed to decode request body: %v", err)
+		}
+		if !reflect.DeepEqual(actualRequestBody, expectedRequestBody) {
+			t.Errorf("Expected request body %v, got %v", expectedRequestBody, actualRequestBody)
+		}
+
+		// Write the mocked response
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(mockResponse)
+	}))
+	defer mockServer.Close()
+
+	// Create a new FortiManager client
+	client := NewAPIClient(mockServer.URL, "fake-key")
+
+	// Call the DeleteService method
+	err := client.DeleteService("test-adom", "test-service")
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+}
+
+func TestDeleteService_Failure_InexistentServiceWithUserClient(t *testing.T) {
+	// Expected request headers
+	expectedRequestHeaders := map[string]string{
+		"Content-Type": "application/json",
+	}
+
+	// Expected request body
+	expectedRequestBody := map[string]interface{}{
+		"method": "delete",
+		"params": []interface{}{
+			map[string]interface{}{
+				"url": "/pm/config/adom/test-adom/obj/firewall/service/custom/nonexistent-service",
+			},
+		},
+		"session": "fake-session",
+	}
+
+	// Mocked response body indicating failure
+	mockResponse := map[string]interface{}{
+		"result": []map[string]interface{}{
+			{
+				"status": map[string]interface{}{
+					"code":    -3,
+					"message": "entry not found",
+				},
+				"url": "/pm/config/adom/test-adom/obj/firewall/service/custom/nonexistent-service",
+			},
+		},
+	}
+
+	// Create a mock server
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Validate the request method
+		if r.Method != http.MethodPost {
+			t.Errorf("Expected method POST, got %s", r.Method)
+		}
+
+		// Validate the request URL
+		if r.URL.Path != "/jsonrpc" {
+			t.Errorf("Expected URL path /jsonrpc, got %s", r.URL.Path)
+		}
+
+		// Validate the request headers
+		for key, expectedValue := range expectedRequestHeaders {
+			actualValue := r.Header.Get(key)
+			if actualValue != expectedValue {
+				t.Errorf("Expected header %s to be %s, got %s", key, expectedValue, actualValue)
+			}
+		}
+
+		// Validate the request body
+		var actualRequestBody map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&actualRequestBody); err != nil {
+			t.Fatalf("Failed to decode request body: %v", err)
+		}
+		if !reflect.DeepEqual(actualRequestBody, expectedRequestBody) {
+			t.Errorf("Expected request body %v, got %v", expectedRequestBody, actualRequestBody)
+		}
+
+		// Write the mocked response
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(mockResponse)
+	}))
+	defer mockServer.Close()
+
+	// Create a new FortiManager client
+	client := NewUserClient(mockServer.URL, "fake-user", "fake-password")
+	client.Session = "fake-session" // Set a fake session
+
+	// Call the DeleteService method
+	err := client.DeleteService("test-adom", "nonexistent-service")
+	if err == nil {
+		t.Fatalf("Expected an error, got nil")
+	}
+
+	// Validate the error message
+	expectedErrorMessage := "failed to delete service: entry not found"
+	if err.Error() != expectedErrorMessage {
+		t.Errorf("Expected error message '%s', got '%s'", expectedErrorMessage, err.Error())
+	}
+}
+
+func TestDeleteAddress_Success_WithUserClient(t *testing.T) {
+	// Expected request headers
+	expectedRequestHeaders := map[string]string{
+		"Content-Type": "application/json",
+	}
+
+	// Expected request body
+	expectedRequestBody := map[string]interface{}{
+		"method": "delete",
+		"params": []interface{}{
+			map[string]interface{}{
+				"url": "/pm/config/adom/test-adom/obj/firewall/address/test-address",
+			},
+		},
+		"session": "fake-session",
+	}
+
+	// Mocked response body
+	mockResponse := map[string]interface{}{
+		"result": []map[string]interface{}{
+			{
+				"status": map[string]interface{}{
+					"code":    0,
+					"message": "OK",
+				},
+				"url": "/pm/config/adom/test-adom/obj/firewall/address/test-address",
+			},
+		},
+	}
+
+	// Create a mock server
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Validate the request method
+		if r.Method != http.MethodPost {
+			t.Errorf("Expected method POST, got %s", r.Method)
+		}
+
+		// Validate the request URL
+		if r.URL.Path != "/jsonrpc" {
+			t.Errorf("Expected URL path /jsonrpc, got %s", r.URL.Path)
+		}
+
+		// Validate the request headers
+		for key, expectedValue := range expectedRequestHeaders {
+			actualValue := r.Header.Get(key)
+			if actualValue != expectedValue {
+				t.Errorf("Expected header %s to be %s, got %s", key, expectedValue, actualValue)
+			}
+		}
+
+		// Validate the request body
+		var actualRequestBody map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&actualRequestBody); err != nil {
+			t.Fatalf("Failed to decode request body: %v", err)
+		}
+		if !reflect.DeepEqual(actualRequestBody, expectedRequestBody) {
+			t.Errorf("Expected request body %v, got %v", expectedRequestBody, actualRequestBody)
+		}
+
+		// Write the mocked response
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(mockResponse)
+	}))
+	defer mockServer.Close()
+
+	// Create a new FortiManager client
+	client := NewUserClient(mockServer.URL, "fake-user", "fake-password")
+	client.Session = "fake-session" // Set a fake session
+
+	// Call the DeleteAddress method
+	err := client.DeleteAddress("test-adom", "test-address")
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+}
+
+func TestDeleteAddress_Success_WithAPIClient(t *testing.T) {
+	// Expected request headers
+	expectedRequestHeaders := map[string]string{
+		"Content-Type":  "application/json",
+		"Authorization": "Bearer fake-key",
+	}
+
+	// Expected request body
+	expectedRequestBody := map[string]interface{}{
+		"method": "delete",
+		"params": []interface{}{
+			map[string]interface{}{
+				"url": "/pm/config/adom/test-adom/obj/firewall/address/test-address",
+			},
+		},
+	}
+
+	// Mocked response body
+	mockResponse := map[string]interface{}{
+		"result": []map[string]interface{}{
+			{
+				"status": map[string]interface{}{
+					"code":    0,
+					"message": "OK",
+				},
+				"url": "/pm/config/adom/test-adom/obj/firewall/address/test-address",
+			},
+		},
+	}
+
+	// Create a mock server
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Validate the request method
+		if r.Method != http.MethodPost {
+			t.Errorf("Expected method POST, got %s", r.Method)
+		}
+
+		// Validate the request URL
+		if r.URL.Path != "/jsonrpc" {
+			t.Errorf("Expected URL path /jsonrpc, got %s", r.URL.Path)
+		}
+
+		// Validate the request headers
+		for key, expectedValue := range expectedRequestHeaders {
+			actualValue := r.Header.Get(key)
+			if actualValue != expectedValue {
+				t.Errorf("Expected header %s to be %s, got %s", key, expectedValue, actualValue)
+			}
+		}
+
+		// Validate the request body
+		var actualRequestBody map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&actualRequestBody); err != nil {
+			t.Fatalf("Failed to decode request body: %v", err)
+		}
+		if !reflect.DeepEqual(actualRequestBody, expectedRequestBody) {
+			t.Errorf("Expected request body %v, got %v", expectedRequestBody, actualRequestBody)
+		}
+
+		// Write the mocked response
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(mockResponse)
+	}))
+	defer mockServer.Close()
+
+	// Create a new FortiManager client
+	client := NewAPIClient(mockServer.URL, "fake-key")
+
+	// Call the DeleteAddress method
+	err := client.DeleteAddress("test-adom", "test-address")
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+}
+
+func TestDeleteAddress_Failure_InexistentAddressWithUserClient(t *testing.T) {
+	// Expected request headers
+	expectedRequestHeaders := map[string]string{
+		"Content-Type": "application/json",
+	}
+
+	// Expected request body
+	expectedRequestBody := map[string]interface{}{
+		"method": "delete",
+		"params": []interface{}{
+			map[string]interface{}{
+				"url": "/pm/config/adom/test-adom/obj/firewall/address/nonexistent-address",
+			},
+		},
+		"session": "fake-session",
+	}
+
+	// Mocked response body indicating failure
+	mockResponse := map[string]interface{}{
+		"result": []map[string]interface{}{
+			{
+				"status": map[string]interface{}{
+					"code":    -3,
+					"message": "entry not found",
+				},
+				"url": "/pm/config/adom/test-adom/obj/firewall/address/nonexistent-address",
+			},
+		},
+	}
+
+	// Create a mock server
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Validate the request method
+		if r.Method != http.MethodPost {
+			t.Errorf("Expected method POST, got %s", r.Method)
+		}
+
+		// Validate the request URL
+		if r.URL.Path != "/jsonrpc" {
+			t.Errorf("Expected URL path /jsonrpc, got %s", r.URL.Path)
+		}
+
+		// Validate the request headers
+		for key, expectedValue := range expectedRequestHeaders {
+			actualValue := r.Header.Get(key)
+			if actualValue != expectedValue {
+				t.Errorf("Expected header %s to be %s, got %s", key, expectedValue, actualValue)
+			}
+		}
+
+		// Validate the request body
+		var actualRequestBody map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&actualRequestBody); err != nil {
+			t.Fatalf("Failed to decode request body: %v", err)
+		}
+		if !reflect.DeepEqual(actualRequestBody, expectedRequestBody) {
+			t.Errorf("Expected request body %v, got %v", expectedRequestBody, actualRequestBody)
+		}
+
+		// Write the mocked response
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(mockResponse)
+	}))
+	defer mockServer.Close()
+
+	// Create a new FortiManager client
+	client := NewUserClient(mockServer.URL, "fake-user", "fake-password")
+	client.Session = "fake-session" // Set a fake session
+
+	// Call the DeleteAddress method
+	err := client.DeleteAddress("test-adom", "nonexistent-address")
+	if err == nil {
+		t.Fatalf("Expected an error, got nil")
+	}
+
+	// Validate the error message
+	expectedErrorMessage := "failed to delete address: entry not found"
 	if err.Error() != expectedErrorMessage {
 		t.Errorf("Expected error message '%s', got '%s'", expectedErrorMessage, err.Error())
 	}

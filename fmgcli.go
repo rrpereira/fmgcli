@@ -85,12 +85,44 @@ type SubnetAddressReq struct {
 	Session string                   `json:"session,omitempty" redact:"true"`
 }
 
+type GroupRespData struct {
+	Name string `json:"name"`
+}
+
+type GroupRespResult struct {
+	Data   GroupRespData `json:"data"`
+	Status Status        `json:"status"`
+	Url    string        `json:"url"`
+}
+
+type GroupResp struct {
+	Result []GroupRespResult `json:"result"`
+}
+
+type GroupReqData struct {
+	Name       string                 `json:"name"`
+	Member     []string               `json:"member,omitempty"`
+	Comment    string                 `json:"comment,omitempty"`
+	Metafields map[string]interface{} `json:"meta fields,omitempty"`
+}
+
+type GroupReqParams struct {
+	Data []GroupReqData `json:"data"`
+	Url  string         `json:"url"`
+}
+
+type GroupReq struct {
+	Method  string           `json:"method"`
+	Params  []GroupReqParams `json:"params"`
+	Session string           `json:"session,omitempty" redact:"true"`
+}
+
 type GetPolicyData struct {
 	Action  string   `json:"action"`
 	Srcaddr []string `json:"srcaddr"`
 	Dstaddr []string `json:"dstaddr"`
 	Objseq  int      `json:"obj seq"`
-	//Oid 	 int      `json:"oid"`
+	//Oid    int      `json:"oid"`
 	PolicyID   int                    `json:"policyid"`
 	Service    []string               `json:"service"`
 	Status     string                 `json:"status"`
@@ -315,6 +347,12 @@ type DeleteReq struct {
 	Session string       `json:"session,omitempty" redact:"true"`
 }
 
+type DeletePolicyReq struct {
+	Method  string     `json:"method"`
+	Params  []UrlParam `json:"params"`
+	Session string     `json:"session,omitempty" redact:"true"`
+}
+
 type LoginData struct {
 	User     string `json:"user"`
 	Password string `json:"password" redact:"true"`
@@ -401,6 +439,7 @@ type ClientOptions func(*Client)
 type PolicyOptions func(*CreatePolicyReqData)
 type AddressOptions func(*SubnetAddressReqData)
 type ServiceOptions func(*ServiceReqData)
+type GroupOptions func(*GroupReqData)
 
 func WithLog(l *slog.Logger) ClientOptions {
 	return func(c *Client) { c.log = l }
@@ -420,6 +459,12 @@ func WithAddressMetafields(metafields map[string]interface{}) AddressOptions {
 
 func WithServiceMetafields(metafields map[string]interface{}) ServiceOptions {
 	return func(data *ServiceReqData) {
+		data.Metafields = metafields
+	}
+}
+
+func WithGroupMetafields(metafields map[string]interface{}) GroupOptions {
+	return func(data *GroupReqData) {
 		data.Metafields = metafields
 	}
 }
@@ -477,10 +522,10 @@ func (fm *Client) CreateService(adom, name, protocol string, minPort, maxPort in
 	}
 
 	if protocol == "tcp" {
-		request.Params[0].Data[0].Protocol = "TCP/UDP/SCTP"
+		request.Params[0].Data[0].Protocol = "TCP/UDP/UDP-Lite/SCTP"
 		request.Params[0].Data[0].TCPPortRange = []string{fmt.Sprintf("%d-%d", minPort, maxPort)}
 	} else if protocol == "udp" {
-		request.Params[0].Data[0].Protocol = "TCP/UDP/SCTP"
+		request.Params[0].Data[0].Protocol = "TCP/UDP/UDP-Lite/SCTP"
 		request.Params[0].Data[0].UDPPortRange = []string{fmt.Sprintf("%d-%d", minPort, maxPort)}
 	} else {
 		fm.log.Error("Invalid protocol for service creation.", "protocol", protocol, "name", name)
@@ -550,7 +595,47 @@ func (fm *Client) CreateSubnetAddress(adom, name, subnet, netmask, comment strin
 	return nil
 }
 
-func (fm *Client) CreatePolicy(pkg, adom, comment string, srcs, dsts, services []string, opts ...PolicyOptions) error {
+func (fm *Client) CreateGroup(adom, name string, members []string, comment string, opts ...GroupOptions) error {
+	request := GroupReq{
+		Method: "add",
+		Params: []GroupReqParams{
+			{
+				Data: []GroupReqData{
+					{
+						Name:    name,
+						Member:  members,
+						Comment: comment,
+					},
+				},
+				Url: fmt.Sprintf("/pm/config/adom/%s/obj/firewall/addrgrp", adom),
+			},
+		},
+		Session: fm.Session,
+	}
+
+	for _, opt := range opts {
+		opt(&request.Params[0].Data[0])
+	}
+
+	var response GroupResp
+
+	err := fm.makeRequest(http.MethodPost, fm.Host, "/jsonrpc", request, &response)
+	if err != nil {
+		fm.log.Error("Error creating group.", "error", err, "adom", adom, "name", name, "members", members)
+		return err
+	}
+
+	if len(response.Result) == 0 || response.Result[0].Status.Code != 0 || response.Result[0].Status.Message != "OK" {
+		fm.log.Error("Failed to create group.", "error", response.Result[0].Status.Message, "adom", adom, "name", name, "members", members)
+		return fmt.Errorf("failed to create group: %s", response.Result[0].Status.Message)
+	}
+
+	fm.log.Debug("Successfully created group.", "adom", adom, "name", name, "members", members)
+
+	return nil
+}
+
+func (fm *Client) CreatePolicy(pkg, adom, comment string, srcs, dsts, services []string, opts ...PolicyOptions) (int, error) {
 	request := CreatePolicyReq{
 		Method: "add",
 		Params: []CreatePolicyParams{
@@ -582,17 +667,17 @@ func (fm *Client) CreatePolicy(pkg, adom, comment string, srcs, dsts, services [
 	err := fm.makeRequest(http.MethodPost, fm.Host, "/jsonrpc", request, &response)
 	if err != nil {
 		fm.log.Error("Error creating policy.", "error", err, "adom", adom, "pkg", pkg, "srcs", srcs, "dsts", dsts, "services", services)
-		return err
+		return 0, err
 	}
 
 	if len(response.Result) == 0 || response.Result[0].Status.Code != 0 || response.Result[0].Status.Message != "OK" {
 		fm.log.Error("Failed to create policy.", "adom", adom, "pkg", pkg, "srcs", srcs, "dsts", dsts, "services", services, "error", response.Result[0].Status.Message)
-		return fmt.Errorf("failed to create policy: %s", response.Result[0].Status.Message)
+		return 0, fmt.Errorf("failed to create policy: %s", response.Result[0].Status.Message)
 	}
 
 	fm.log.Debug("Successfully created policy.", "adom", adom, "pkg", pkg, "id", response.Result[0].Data.PolicyID, "sources", srcs, "destinations", dsts, "services", services)
 
-	return nil
+	return response.Result[0].Data.PolicyID, nil
 }
 
 func (fm *Client) Commit(adom string) error {
@@ -735,6 +820,142 @@ func (fm *Client) DisablePolicy(adom, pkg string, id int) error {
 	}
 
 	fm.log.Debug("Successfully disabled policy.", "adom", adom, "pkg", pkg, "id", id)
+
+	return nil
+}
+
+func (fm *Client) DeletePolicy(adom, pkg string, id int) error {
+	request := DeletePolicyReq{
+		Method: "delete",
+		Params: []UrlParam{
+			{
+				Url: fmt.Sprintf("/pm/config/adom/%s/pkg/%s/firewall/policy/%d", adom, pkg, id),
+			},
+		},
+		Session: fm.Session,
+	}
+
+	var response DeleteResp
+
+	err := fm.makeRequest(http.MethodPost, fm.Host, "/jsonrpc", request, &response)
+	if err != nil {
+		fm.log.Error("Error deleting policy.", "error", err, "adom", adom, "pkg", pkg, "id", id)
+		return err
+	}
+
+	if len(response.Result) == 0 {
+		fm.log.Error("Failed to delete policy.", "error", "empty response", "adom", adom, "pkg", pkg, "id", id)
+		return errors.New("failed to delete policy: empty response")
+	}
+
+	if response.Result[0].Status.Code != 0 || response.Result[0].Status.Message != "OK" {
+		fm.log.Error("Failed to delete policy.", "error", response.Result[0].Status.Message, "adom", adom, "pkg", pkg, "id", id)
+		return fmt.Errorf("failed to delete policy: %s", response.Result[0].Status.Message)
+	}
+
+	fm.log.Debug("Successfully deleted policy.", "adom", adom, "pkg", pkg, "id", id)
+
+	return nil
+}
+
+func (fm *Client) DeleteService(adom, serviceName string) error {
+	request := DeletePolicyReq{
+		Method: "delete",
+		Params: []UrlParam{
+			{
+				Url: fmt.Sprintf("/pm/config/adom/%s/obj/firewall/service/custom/%s", adom, serviceName),
+			},
+		},
+		Session: fm.Session,
+	}
+
+	var response DeleteResp
+
+	err := fm.makeRequest(http.MethodPost, fm.Host, "/jsonrpc", request, &response)
+	if err != nil {
+		fm.log.Error("Error deleting service.", "error", err, "adom", adom, "serviceName", serviceName)
+		return err
+	}
+
+	if len(response.Result) == 0 {
+		fm.log.Error("Failed to delete service.", "error", "empty response", "adom", adom, "serviceName", serviceName)
+		return errors.New("failed to delete service: empty response")
+	}
+
+	if response.Result[0].Status.Code != 0 || response.Result[0].Status.Message != "OK" {
+		fm.log.Error("Failed to delete service.", "error", response.Result[0].Status.Message, "adom", adom, "serviceName", serviceName)
+		return fmt.Errorf("failed to delete service: %s", response.Result[0].Status.Message)
+	}
+
+	fm.log.Debug("Successfully deleted service.", "adom", adom, "serviceName", serviceName)
+
+	return nil
+}
+
+func (fm *Client) DeleteAddress(adom, addressName string) error {
+	request := DeletePolicyReq{
+		Method: "delete",
+		Params: []UrlParam{
+			{
+				Url: fmt.Sprintf("/pm/config/adom/%s/obj/firewall/address/%s", adom, addressName),
+			},
+		},
+		Session: fm.Session,
+	}
+
+	var response DeleteResp
+
+	err := fm.makeRequest(http.MethodPost, fm.Host, "/jsonrpc", request, &response)
+	if err != nil {
+		fm.log.Error("Error deleting address.", "error", err, "adom", adom, "addressName", addressName)
+		return err
+	}
+
+	if len(response.Result) == 0 {
+		fm.log.Error("Failed to delete address.", "error", "empty response", "adom", adom, "addressName", addressName)
+		return errors.New("failed to delete address: empty response")
+	}
+
+	if response.Result[0].Status.Code != 0 || response.Result[0].Status.Message != "OK" {
+		fm.log.Error("Failed to delete address.", "error", response.Result[0].Status.Message, "adom", adom, "addressName", addressName)
+		return fmt.Errorf("failed to delete address: %s", response.Result[0].Status.Message)
+	}
+
+	fm.log.Debug("Successfully deleted address.", "adom", adom, "addressName", addressName)
+
+	return nil
+}
+
+func (fm *Client) DeleteGroup(adom, groupName string) error {
+	request := DeletePolicyReq{
+		Method: "delete",
+		Params: []UrlParam{
+			{
+				Url: fmt.Sprintf("/pm/config/adom/%s/obj/firewall/addrgrp/%s", adom, groupName),
+			},
+		},
+		Session: fm.Session,
+	}
+
+	var response DeleteResp
+
+	err := fm.makeRequest(http.MethodPost, fm.Host, "/jsonrpc", request, &response)
+	if err != nil {
+		fm.log.Error("Error deleting group.", "error", err, "adom", adom, "groupName", groupName)
+		return err
+	}
+
+	if len(response.Result) == 0 {
+		fm.log.Error("Failed to delete group.", "error", "empty response", "adom", adom, "groupName", groupName)
+		return errors.New("failed to delete group: empty response")
+	}
+
+	if response.Result[0].Status.Code != 0 || response.Result[0].Status.Message != "OK" {
+		fm.log.Error("Failed to delete group.", "error", response.Result[0].Status.Message, "adom", adom, "groupName", groupName)
+		return fmt.Errorf("failed to delete group: %s", response.Result[0].Status.Message)
+	}
+
+	fm.log.Debug("Successfully deleted group.", "adom", adom, "groupName", groupName)
 
 	return nil
 }
@@ -1585,6 +1806,41 @@ func (fm *Client) UpdateSubnetAddressWithMetafields(adom, name string, metafield
 	return nil
 }
 
+func (fm *Client) UpdateGroupWithMetafields(adom, name string, metafields map[string]interface{}) error {
+	request := GroupReq{
+		Method: "set",
+		Params: []GroupReqParams{
+			{
+				Data: []GroupReqData{
+					{
+						Name:       name,
+						Metafields: metafields,
+					},
+				},
+				Url: fmt.Sprintf("/pm/config/adom/%s/obj/firewall/addrgrp", adom),
+			},
+		},
+		Session: fm.Session,
+	}
+
+	var response GroupResp
+
+	err := fm.makeRequest(http.MethodPost, fm.Host, "/jsonrpc", request, &response)
+	if err != nil {
+		fm.log.Error("Error updating group with metafields.", "error", err, "adom", adom, "name", name)
+		return err
+	}
+
+	if len(response.Result) == 0 || response.Result[0].Status.Code != 0 || response.Result[0].Status.Message != "OK" {
+		fm.log.Error("Failed to update group with metafields.", "error", response.Result[0].Status.Message, "adom", adom, "name", name)
+		return fmt.Errorf("failed to update group with metafields: %s", response.Result[0].Status.Message)
+	}
+
+	fm.log.Debug("Successfully updated group with metafields.", "adom", adom, "name", name, "metafields", metafields)
+
+	return nil
+}
+
 // todo this function is quite inefficient - the redacting is not working - do not commit before finishing this
 // maybe this has to be an internal function
 // doesn't make sense to use fmt in some cases and the arguement in other cases, either this belongs to the client or the caller
@@ -1610,10 +1866,10 @@ func (fm *Client) makeRequest(method, host, endpoint string, reqBody interface{}
 	}
 
 	/*redactedReqBody, err := redactSensitiveData(jsonData, reqBody)
-	if err != nil {
-		return fmt.Errorf("error redacting sensitive data: %v", err)
-	}*
-	fm.infoLog.Printf("Request: %s %s %s\n", host+method, endpoint, reqBody)*/
+	  if err != nil {
+	              return fmt.Errorf("error redacting sensitive data: %v", err)
+	  }*
+	  fm.infoLog.Printf("Request: %s %s %s\n", host+method, endpoint, reqBody)*/
 	fm.log.Debug("Making request.", "method", method, "url", host+endpoint, "requestBody", reqBody)
 
 	client := &http.Client{}
@@ -1646,10 +1902,10 @@ func (fm *Client) makeRequest(method, host, endpoint string, reqBody interface{}
 	}
 
 	/*redactedRespBody, err := redactSensitiveData(body, respBody)
-	if err != nil {
-		return fmt.Errorf("error redacting sensitive data: %v", err)
-	}
-	fm.infoLog.Printf("Response (%d ms): %s %s %s\n", durationEnd, resp.Status, host+endpoint, redactedRespBody)*/
+	  if err != nil {
+	              return fmt.Errorf("error redacting sensitive data: %v", err)
+	  }
+	  fm.infoLog.Printf("Response (%d ms): %s %s %s\n", durationEnd, resp.Status, host+endpoint, redactedRespBody)*/
 	fm.log.Debug("Received response.", "status", resp.Status, "url", host+endpoint, "durationMs", durationEnd, "responseBody", string(body))
 
 	err = json.Unmarshal(body, respBody)
