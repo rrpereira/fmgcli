@@ -7666,7 +7666,7 @@ func TestCreateService_Success_AddingUDPService(t *testing.T) {
 	}
 }
 
-func TestCreateGroup_Success_AddingGroup(t *testing.T) {
+func TestCreateAddressGroup_Success_AddingGroup(t *testing.T) {
 	expectedRequestHeaders := map[string]string{
 		"Content-Type":  "application/json",
 		"Authorization": "Bearer fake-key",
@@ -7735,13 +7735,13 @@ func TestCreateGroup_Success_AddingGroup(t *testing.T) {
 
 	client := NewAPIClient(mockServer.URL, "fake-key")
 
-	err := client.CreateGroup("test-adom", "test-group", []string{"addr-1", "addr-2"}, "test comment", WithGroupMetafields(map[string]interface{}{"some_uuid": "random-uuid"}))
+	err := client.CreateAddressGroup("test-adom", "test-group", []string{"addr-1", "addr-2"}, "test comment", WithAddressGroupMetafields(map[string]interface{}{"some_uuid": "random-uuid"}))
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 }
 
-func TestUpdateGroupWithMetafields_Success(t *testing.T) {
+func TestUpdateAddressGroupWithMetafields_Success(t *testing.T) {
 	expectedRequestHeaders := map[string]string{
 		"Content-Type":  "application/json",
 		"Authorization": "Bearer fake-key",
@@ -7808,13 +7808,13 @@ func TestUpdateGroupWithMetafields_Success(t *testing.T) {
 
 	client := NewAPIClient(mockServer.URL, "fake-key")
 
-	err := client.UpdateGroupWithMetafields("test-adom", "test-group", map[string]interface{}{"some_uuid": "random-uuid"})
+	err := client.UpdateAddressGroupWithMetafields("test-adom", "test-group", map[string]interface{}{"some_uuid": "random-uuid"})
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 }
 
-func TestDeleteGroup_Success(t *testing.T) {
+func TestDeleteAddressGroup_Success(t *testing.T) {
 	expectedRequestHeaders := map[string]string{
 		"Content-Type":  "application/json",
 		"Authorization": "Bearer fake-key",
@@ -7872,7 +7872,7 @@ func TestDeleteGroup_Success(t *testing.T) {
 
 	client := NewAPIClient(mockServer.URL, "fake-key")
 
-	err := client.DeleteGroup("test-adom", "test-group")
+	err := client.DeleteAddressGroup("test-adom", "test-group")
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}

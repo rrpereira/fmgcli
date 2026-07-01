@@ -1005,7 +1005,7 @@ func TestE2E_CreateUpdateDeleteAddress(t *testing.T) {
 	locked = false
 }
 
-func TestE2E_CreateUpdateDeleteGroup(t *testing.T) {
+func TestE2E_CreateGetUpdateDeleteAddressGroup(t *testing.T) {
 	_ = godotenv.Load()
 
 	host := strings.TrimSpace(os.Getenv("FMG_E2E_HOST"))
@@ -1015,7 +1015,7 @@ func TestE2E_CreateUpdateDeleteGroup(t *testing.T) {
 	addressNamesCSV := strings.TrimSpace(os.Getenv("FMG_E2E_ADDRESS_NAMES"))
 
 	if host == "" || token == "" || adom == "" || metafieldKey == "" || addressNamesCSV == "" {
-		t.Fatalf("set FMG_E2E_HOST, FMG_E2E_TOKEN, FMG_E2E_ADOM, FMG_E2E_GROUP_METAFIELD_KEY and FMG_E2E_ADDRESS_NAMES to run e2e create-update-delete-group test")
+		t.Fatalf("set FMG_E2E_HOST, FMG_E2E_TOKEN, FMG_E2E_ADOM, FMG_E2E_GROUP_METAFIELD_KEY and FMG_E2E_ADDRESS_NAMES to run e2e create-get-update-delete-group test")
 	}
 
 	groupMembers := parseCSVList(addressNamesCSV)
@@ -1037,7 +1037,7 @@ func TestE2E_CreateUpdateDeleteGroup(t *testing.T) {
 	locked = true
 
 	// Create a group
-	err := client.CreateGroup(adom, groupName, groupMembers, "E2E test group")
+	err := client.CreateAddressGroup(adom, groupName, groupMembers, "E2E test group")
 	if err != nil {
 		t.Fatalf("create group failed for ADOM %q: %v", adom, err)
 	}
@@ -1051,8 +1051,24 @@ func TestE2E_CreateUpdateDeleteGroup(t *testing.T) {
 
 	t.Logf("Successfully committed group creation")
 
+	// Verify the group can be retrieved by name
+	createdGroup, err := client.GetAddressGroupByName(adom, groupName)
+	if err != nil {
+		t.Fatalf("get group by name failed for group name %q in ADOM %q: %v", groupName, adom, err)
+	}
+
+	if createdGroup == nil {
+		t.Fatalf("expected group %q, got nil", groupName)
+	}
+
+	if createdGroup.Name != groupName {
+		t.Fatalf("expected group name %q, got %q", groupName, createdGroup.Name)
+	}
+
+	t.Logf("Verified group can be retrieved by name")
+
 	// Update the group
-	err = client.UpdateGroupWithMetafields(adom, groupName, map[string]interface{}{
+	err = client.UpdateAddressGroupWithMetafields(adom, groupName, map[string]interface{}{
 		metafieldKey: metafieldValue,
 	})
 	if err != nil {
@@ -1068,8 +1084,24 @@ func TestE2E_CreateUpdateDeleteGroup(t *testing.T) {
 
 	t.Logf("Successfully committed group update")
 
+	// Verify the group can be retrieved by metafield
+	updatedGroup, err := client.GetAddressGroupByMetafield(adom, metafieldKey, metafieldValue)
+	if err != nil {
+		t.Fatalf("get group by metafield failed for %q=%q in ADOM %q: %v", metafieldKey, metafieldValue, adom, err)
+	}
+
+	if updatedGroup == nil {
+		t.Fatalf("expected updated group %q, got nil", groupName)
+	}
+
+	if updatedGroup.Name != groupName {
+		t.Fatalf("expected updated group name %q, got %q", groupName, updatedGroup.Name)
+	}
+
+	t.Logf("Verified group can be retrieved by metafield")
+
 	// Delete the group
-	if err := client.DeleteGroup(adom, groupName); err != nil {
+	if err := client.DeleteAddressGroup(adom, groupName); err != nil {
 		t.Fatalf("delete group failed for group name %q in ADOM %q: %v", groupName, adom, err)
 	}
 
@@ -1083,12 +1115,12 @@ func TestE2E_CreateUpdateDeleteGroup(t *testing.T) {
 	t.Logf("Successfully committed group deletion")
 
 	// Verify the group was deleted by expecting a second delete to fail.
-	err = client.DeleteGroup(adom, groupName)
+	err = client.DeleteAddressGroup(adom, groupName)
 	if err == nil {
 		t.Fatalf("expected error when deleting already deleted group %q, but got none", groupName)
 	}
 
-	t.Logf("Verified group was deleted (second DeleteGroup returned expected error)")
+	t.Logf("Verified group was deleted (second DeleteAddressGroup returned expected error)")
 
 	// Unlock the ADOM
 	if err := client.Unlock(adom); err != nil {

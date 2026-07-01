@@ -85,36 +85,75 @@ type SubnetAddressReq struct {
 	Session string                   `json:"session,omitempty" redact:"true"`
 }
 
-type GroupRespData struct {
+type AddressGroupRespData struct {
 	Name string `json:"name"`
 }
 
-type GroupRespResult struct {
-	Data   GroupRespData `json:"data"`
-	Status Status        `json:"status"`
-	Url    string        `json:"url"`
+type AddressGroupRespResult struct {
+	Data   AddressGroupRespData `json:"data"`
+	Status Status               `json:"status"`
+	Url    string               `json:"url"`
 }
 
-type GroupResp struct {
-	Result []GroupRespResult `json:"result"`
+type AddressGroupResp struct {
+	Result []AddressGroupRespResult `json:"result"`
 }
 
-type GroupReqData struct {
+type AddressGroupReqData struct {
 	Name       string                 `json:"name"`
 	Member     []string               `json:"member,omitempty"`
 	Comment    string                 `json:"comment,omitempty"`
 	Metafields map[string]interface{} `json:"meta fields,omitempty"`
 }
 
-type GroupReqParams struct {
-	Data []GroupReqData `json:"data"`
-	Url  string         `json:"url"`
+type AddressGroupReqParams struct {
+	Data []AddressGroupReqData `json:"data"`
+	Url  string                `json:"url"`
 }
 
-type GroupReq struct {
-	Method  string           `json:"method"`
-	Params  []GroupReqParams `json:"params"`
-	Session string           `json:"session,omitempty" redact:"true"`
+type AddressGroupReq struct {
+	Method  string                  `json:"method"`
+	Params  []AddressGroupReqParams `json:"params"`
+	Session string                  `json:"session,omitempty" redact:"true"`
+}
+
+type GetAddressGroupData struct {
+	Name       string                 `json:"name"`
+	Member     []string               `json:"member"`
+	Metafields map[string]interface{} `json:"meta fields,omitempty"`
+}
+
+type GetAddressGroupResult struct {
+	Data   GetAddressGroupData `json:"data,omitempty"`
+	Status Status              `json:"status,omitempty"`
+	Url    string              `json:"url,omitempty"`
+}
+
+type GetAddressGroupResp struct {
+	Result []GetAddressGroupResult `json:"result,omitempty"`
+}
+
+type GetAddressGroupsResult struct {
+	Data   []GetAddressGroupData `json:"data,omitempty"`
+	Status Status                `json:"status,omitempty"`
+	Url    string                `json:"url,omitempty"`
+}
+
+type GetAddressGroupsResp struct {
+	Result []GetAddressGroupsResult `json:"result,omitempty"`
+}
+
+type GetAddressGroupsParams struct {
+	Fields []string `json:"fields"`
+	Option []string `json:"option,omitempty"`
+	Url    string   `json:"url"`
+}
+
+type GetAddressGroupsReq struct {
+	Method  string                   `json:"method"`
+	Params  []GetAddressGroupsParams `json:"params"`
+	Session string                   `json:"session,omitempty" redact:"true"`
+	Verbose int                      `json:"verbose,omitempty"`
 }
 
 type GetPolicyData struct {
@@ -336,18 +375,18 @@ type DeleteResp struct {
 	Result []Result `json:"result"`
 }
 
-type DeleteParams struct {
+type DeleteFromParams struct {
 	Data []string `json:"data"`
 	Url  string   `json:"url"`
 }
 
-type DeleteReq struct {
-	Method  string       `json:"method"`
-	Params  DeleteParams `json:"params"`
-	Session string       `json:"session,omitempty" redact:"true"`
+type DeleteFromReq struct {
+	Method  string           `json:"method"`
+	Params  DeleteFromParams `json:"params"`
+	Session string           `json:"session,omitempty" redact:"true"`
 }
 
-type DeletePolicyReq struct {
+type DeleteResourceReq struct {
 	Method  string     `json:"method"`
 	Params  []UrlParam `json:"params"`
 	Session string     `json:"session,omitempty" redact:"true"`
@@ -439,7 +478,7 @@ type ClientOptions func(*Client)
 type PolicyOptions func(*CreatePolicyReqData)
 type AddressOptions func(*SubnetAddressReqData)
 type ServiceOptions func(*ServiceReqData)
-type GroupOptions func(*GroupReqData)
+type AddressGroupOptions func(*AddressGroupReqData)
 
 func WithLog(l *slog.Logger) ClientOptions {
 	return func(c *Client) { c.log = l }
@@ -463,8 +502,8 @@ func WithServiceMetafields(metafields map[string]interface{}) ServiceOptions {
 	}
 }
 
-func WithGroupMetafields(metafields map[string]interface{}) GroupOptions {
-	return func(data *GroupReqData) {
+func WithAddressGroupMetafields(metafields map[string]interface{}) AddressGroupOptions {
+	return func(data *AddressGroupReqData) {
 		data.Metafields = metafields
 	}
 }
@@ -595,12 +634,12 @@ func (fm *Client) CreateSubnetAddress(adom, name, subnet, netmask, comment strin
 	return nil
 }
 
-func (fm *Client) CreateGroup(adom, name string, members []string, comment string, opts ...GroupOptions) error {
-	request := GroupReq{
+func (fm *Client) CreateAddressGroup(adom, name string, members []string, comment string, opts ...AddressGroupOptions) error {
+	request := AddressGroupReq{
 		Method: "add",
-		Params: []GroupReqParams{
+		Params: []AddressGroupReqParams{
 			{
-				Data: []GroupReqData{
+				Data: []AddressGroupReqData{
 					{
 						Name:    name,
 						Member:  members,
@@ -617,7 +656,7 @@ func (fm *Client) CreateGroup(adom, name string, members []string, comment strin
 		opt(&request.Params[0].Data[0])
 	}
 
-	var response GroupResp
+	var response AddressGroupResp
 
 	err := fm.makeRequest(http.MethodPost, fm.Host, "/jsonrpc", request, &response)
 	if err != nil {
@@ -714,9 +753,9 @@ func (fm *Client) DeleteFromPolicy(id int, objects []string, role, vdom, device,
 		return errors.New("invalid role")
 	}
 
-	request := DeleteReq{
+	request := DeleteFromReq{
 		Method: "delete",
-		Params: DeleteParams{
+		Params: DeleteFromParams{
 			Data: objects,
 			Url:  fmt.Sprintf("/pm/config/adom/%s/pkg/%s/%s/firewall/policy/%d/%s", adom, device, vdom, id, role),
 		},
@@ -825,7 +864,7 @@ func (fm *Client) DisablePolicy(adom, pkg string, id int) error {
 }
 
 func (fm *Client) DeletePolicy(adom, pkg string, id int) error {
-	request := DeletePolicyReq{
+	request := DeleteResourceReq{
 		Method: "delete",
 		Params: []UrlParam{
 			{
@@ -859,7 +898,7 @@ func (fm *Client) DeletePolicy(adom, pkg string, id int) error {
 }
 
 func (fm *Client) DeleteService(adom, serviceName string) error {
-	request := DeletePolicyReq{
+	request := DeleteResourceReq{
 		Method: "delete",
 		Params: []UrlParam{
 			{
@@ -893,7 +932,7 @@ func (fm *Client) DeleteService(adom, serviceName string) error {
 }
 
 func (fm *Client) DeleteAddress(adom, addressName string) error {
-	request := DeletePolicyReq{
+	request := DeleteResourceReq{
 		Method: "delete",
 		Params: []UrlParam{
 			{
@@ -926,8 +965,8 @@ func (fm *Client) DeleteAddress(adom, addressName string) error {
 	return nil
 }
 
-func (fm *Client) DeleteGroup(adom, groupName string) error {
-	request := DeletePolicyReq{
+func (fm *Client) DeleteAddressGroup(adom, groupName string) error {
+	request := DeleteResourceReq{
 		Method: "delete",
 		Params: []UrlParam{
 			{
@@ -999,6 +1038,213 @@ func (fm *Client) GetAddressByName(adom, objectName string) (*GetAddressData, er
 	fm.log.Debug("Successfully fetched address by name.", "adom", adom, "objectName", objectName, "addressData", response.Result[0].Data)
 
 	return &response.Result[0].Data, nil
+}
+
+func (fm *Client) GetAddressGroupByName(adom, groupName string) (*GetAddressGroupData, error) {
+	request := GetAddressGroupsReq{
+		Method: "get",
+		Params: []GetAddressGroupsParams{
+			{
+				Fields: []string{"name", "member"},
+				Option: []string{"get meta"},
+				Url:    fmt.Sprintf("/pm/config/adom/%s/obj/firewall/addrgrp/%s", adom, groupName),
+			},
+		},
+		Session: fm.Session,
+	}
+
+	var response GetAddressGroupResp
+
+	err := fm.makeRequest(http.MethodPost, fm.Host, "/jsonrpc", request, &response)
+	if err != nil {
+		fm.log.Error("Error fetching address group by name.", "error", err, "adom", adom, "groupName", groupName)
+		return nil, err
+	}
+
+	if len(response.Result) > 1 {
+		fm.log.Error("Multiple address groups found for name.", "groupName", groupName, "count", len(response.Result))
+		return nil, fmt.Errorf("multiple address groups found for '%s': %d results", groupName, len(response.Result))
+	}
+
+	if response.Result[0].Status.Code == -3 || response.Result[0].Status.Message == "Object does not exist" {
+		fm.log.Debug("Address group not found in ADOM.", "adom", adom, "groupName", groupName)
+		return nil, fmt.Errorf("address group '%s' not found in ADOM '%s'", groupName, adom)
+	}
+
+	if response.Result[0].Status.Code != 0 || response.Result[0].Status.Message != "OK" {
+		fm.log.Error("Error fetching address group by name.", "error", response.Result[0].Status.Message, "adom", adom, "groupName", groupName)
+		return nil, fmt.Errorf("error fetching address group '%s': %s", groupName, response.Result[0].Status.Message)
+	}
+
+	fm.log.Debug("Successfully fetched address group by name.", "adom", adom, "groupName", groupName, "groupData", response.Result[0].Data)
+
+	return &response.Result[0].Data, nil
+}
+
+func (fm *Client) GetAddressGroupByMetafield(adom, key string, value interface{}) (*GetAddressGroupData, error) {
+	found := false
+	var group GetAddressGroupData
+
+	request := GetAddressGroupsReq{
+		Method: "get",
+		Params: []GetAddressGroupsParams{
+			{
+				Fields: []string{"name", "member"},
+				Option: []string{"get meta"},
+				Url:    fmt.Sprintf("/pm/config/adom/%s/obj/firewall/addrgrp", adom),
+			},
+		},
+		Session: fm.Session,
+		Verbose: 1,
+	}
+
+	var response GetAddressGroupsResp
+
+	err := fm.makeRequest(http.MethodPost, fm.Host, "/jsonrpc", request, &response)
+	if err != nil {
+		fm.log.Error("Error fetching address groups by metafield.", "error", err, "adom", adom, "key", key, "value", value)
+		return nil, err
+	}
+
+	if len(response.Result) == 0 {
+		fm.log.Error("Error fetching address groups: no result in response.", "adom", adom, "key", key, "value", value, "response", response)
+		return nil, fmt.Errorf("error fetching address groups: no result in response for ADOM '%s'", adom)
+	}
+
+	if response.Result[0].Status.Code != 0 || response.Result[0].Status.Message != "OK" {
+		fm.log.Error("Error fetching address groups.", "error", response.Result[0].Status.Message, "adom", adom, "key", key, "value", value)
+		return nil, fmt.Errorf("error fetching address groups: %s", response.Result[0].Status.Message)
+	}
+
+	for _, result := range response.Result {
+		for _, data := range result.Data {
+			if metafieldValue, ok := data.Metafields[key]; ok && reflect.DeepEqual(metafieldValue, value) {
+				if found {
+					fm.log.Error("Multiple address groups found with metafield.", "key", key, "value", value, "adom", adom)
+					return nil, fmt.Errorf("multiple address groups found with metafield '%s'='%v' in ADOM '%s'", key, value, adom)
+				}
+
+				found = true
+				group = data
+			}
+		}
+	}
+
+	if !found {
+		fm.log.Debug("No address group found with metafield.", "key", key, "value", value, "adom", adom)
+		return nil, fmt.Errorf("no address group found with metafield '%s'='%v' in ADOM '%s'", key, value, adom)
+	}
+
+	fm.log.Debug("Successfully fetched address group by metafield.", "adom", adom, "key", key, "value", value, "groupData", &group)
+
+	return &group, nil
+}
+
+func (fm *Client) GetAddressGroupsByMetafield(adom, key string, values []interface{}) ([]GetAddressGroupData, error) {
+	var groups []GetAddressGroupData
+
+	request := GetAddressGroupsReq{
+		Method: "get",
+		Params: []GetAddressGroupsParams{
+			{
+				Fields: []string{"name", "member"},
+				Option: []string{"get meta"},
+				Url:    fmt.Sprintf("/pm/config/adom/%s/obj/firewall/addrgrp", adom),
+			},
+		},
+		Session: fm.Session,
+		Verbose: 1,
+	}
+
+	var response GetAddressGroupsResp
+
+	err := fm.makeRequest(http.MethodPost, fm.Host, "/jsonrpc", request, &response)
+	if err != nil {
+		fm.log.Error("Error fetching address groups by metafield.", "error", err, "adom", adom, "key", key, "values", values)
+		return nil, err
+	}
+
+	if len(response.Result) == 0 {
+		fm.log.Error("Error fetching address groups: no result in response.", "adom", adom, "key", key, "values", values, "response", response)
+		return nil, fmt.Errorf("error fetching address groups: no result in response for ADOM '%s'", adom)
+	}
+
+	if response.Result[0].Status.Code != 0 || response.Result[0].Status.Message != "OK" {
+		fm.log.Error("Error fetching address groups.", "error", response.Result[0].Status.Message, "adom", adom, "key", key, "values", values)
+		return nil, fmt.Errorf("error fetching address groups: %s", response.Result[0].Status.Message)
+	}
+
+	for _, value := range values {
+		found := false
+		for _, result := range response.Result {
+			for _, data := range result.Data {
+				if metafieldValue, ok := data.Metafields[key]; ok && reflect.DeepEqual(metafieldValue, value) {
+					if found {
+						fm.log.Error("Multiple address groups found with metafield.", "adom", adom, "key", key, "value", value)
+						return nil, fmt.Errorf("multiple address groups found with metafield '%s'='%v' in ADOM '%s'", key, value, adom)
+					}
+
+					groups = append(groups, data)
+					fm.log.Debug("Found address group by metafield.", "adom", adom, "key", key, "value", value, "groupData", data)
+					found = true
+				}
+			}
+		}
+	}
+
+	if len(groups) != len(values) {
+		fm.log.Warn("Found address groups by metafield, but count does not match expected.", "adom", adom, "key", key, "values", values, "foundCount", len(groups), "expectedCount", len(values))
+		return nil, fmt.Errorf("found %d address groups corresponding the following '%s' metafield values: '%v', but expected %d in ADOM '%s'", len(groups), key, values, len(values), adom)
+	}
+
+	fm.log.Debug("Successfully fetched address groups by metafield.", "adom", adom, "key", key, "values", values, "groupsCount", len(groups))
+
+	return groups, nil
+}
+
+func (fm *Client) GetAddressGroupsByName(groupNames []string, adom string) ([]GetAddressGroupData, error) {
+	var params []GetAddressGroupsParams
+	var problematic []string
+
+	for _, groupName := range groupNames {
+		params = append(params, GetAddressGroupsParams{
+			Fields: []string{"name", "member"},
+			Url:    fmt.Sprintf("/pm/config/adom/%s/obj/firewall/addrgrp/%s", adom, groupName),
+		})
+	}
+
+	request := GetAddressGroupsReq{
+		Method:  "get",
+		Params:  params,
+		Session: fm.Session,
+		Verbose: 1,
+	}
+
+	var response GetAddressGroupResp
+
+	err := fm.makeRequest(http.MethodPost, fm.Host, "/jsonrpc", request, &response)
+	if err != nil {
+		fm.log.Error("Error fetching address groups by names.", "error", err, "adom", adom, "groupNames", groupNames)
+		return nil, err
+	}
+
+	var groupsData []GetAddressGroupData
+	for i, result := range response.Result {
+		if result.Status.Code != 0 || result.Status.Message != "OK" {
+			problematic = append(problematic, groupNames[i])
+		} else {
+			groupsData = append(groupsData, result.Data)
+		}
+	}
+
+	if len(problematic) != 0 {
+		fm.log.Error("There were errors when fetching address groups.", "adom", adom, "problematic", problematic)
+		return nil, fmt.Errorf("there were errors when fetching the following address groups: %v", problematic)
+	}
+
+	fm.log.Debug("Successfully fetched address groups by names.", "adom", adom, "groupsCount", len(groupsData), "groupsData", groupsData)
+
+	return groupsData, nil
 }
 
 func (fm *Client) GetAddressByNameIPAndNetmask(adom, objectName, ip, netmask string) (*GetAddressData, error) {
@@ -1806,12 +2052,12 @@ func (fm *Client) UpdateSubnetAddressWithMetafields(adom, name string, metafield
 	return nil
 }
 
-func (fm *Client) UpdateGroupWithMetafields(adom, name string, metafields map[string]interface{}) error {
-	request := GroupReq{
+func (fm *Client) UpdateAddressGroupWithMetafields(adom, name string, metafields map[string]interface{}) error {
+	request := AddressGroupReq{
 		Method: "set",
-		Params: []GroupReqParams{
+		Params: []AddressGroupReqParams{
 			{
-				Data: []GroupReqData{
+				Data: []AddressGroupReqData{
 					{
 						Name:       name,
 						Metafields: metafields,
@@ -1823,7 +2069,7 @@ func (fm *Client) UpdateGroupWithMetafields(adom, name string, metafields map[st
 		Session: fm.Session,
 	}
 
-	var response GroupResp
+	var response AddressGroupResp
 
 	err := fm.makeRequest(http.MethodPost, fm.Host, "/jsonrpc", request, &response)
 	if err != nil {
