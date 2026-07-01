@@ -79,59 +79,43 @@ go test ./...
 
 ### End-to-End Tests
 
-Set these environment variables depending on the test:
-
-- `FMG_E2E_HOST` — required for all e2e tests
-- `FMG_E2E_USER` and `FMG_E2E_PASSWORD` — required for `TestE2E_LoginLogout`
-- `FMG_E2E_TOKEN` and `FMG_E2E_ADOM` — required for API-key e2e tests
-- `FMG_E2E_ADDRESS_NAME` — required for `TestE2E_GetAddressByName`
-- `FMG_E2E_ADDRESS_METAFIELD_KEY` and `FMG_E2E_ADDRESS_METAFIELD_VALUE` — required for `TestE2E_GetAddressByMetafield`
-- `FMG_E2E_ADDRESS_METAFIELD_KEY` and `FMG_E2E_ADDRESS_METAFIELD_VALUES` (comma-separated values) — required for `TestE2E_GetAddressesByMetafield`
-- `FMG_E2E_ADDRESS_NAME_IP_NETMASK_NAME`, `FMG_E2E_ADDRESS_NAME_IP_NETMASK_IP`, and `FMG_E2E_ADDRESS_NAME_IP_NETMASK_NETMASK` — required for `TestE2E_GetAddressByNameIPAndNetmask`
-- `FMG_E2E_PKG` and `FMG_E2E_POLICY_ID` — required for `TestE2E_GetPoliciesByID`
-- `FMG_E2E_PKG`, `FMG_E2E_POLICY_METAFIELD_KEY`, and `FMG_E2E_POLICY_METAFIELD_VALUE` — required for `TestE2E_GetPolicyByMetafield`
-- `FMG_E2E_PKG`, `FMG_E2E_POLICY_METAFIELD_KEY`, and `FMG_E2E_POLICY_METAFIELD_VALUES` (comma-separated values) — required for `TestE2E_GetPoliciesByMetafield`
-- `FMG_E2E_SERVICE_NAME`, `FMG_E2E_SERVICE_PROTOCOL`, `FMG_E2E_SERVICE_MIN_PORT`, and `FMG_E2E_SERVICE_MAX_PORT` — required for `TestE2E_GetServiceByNamePortAndProtocol`
-- `FMG_E2E_SERVICE_METAFIELD_KEY` and `FMG_E2E_SERVICE_METAFIELD_VALUE` — required for `TestE2E_GetServiceByMetafield`
-- `FMG_E2E_SERVICE_METAFIELD_KEY` and `FMG_E2E_SERVICE_METAFIELD_VALUES` (comma-separated values) — required for `TestE2E_GetServicesByMetafield`
-- `FMG_E2E_SERVICE_NAMES` (comma-separated service names) — required for `TestE2E_GetServicesByName`
-
-You can set these in a `.env` file in the project root, or export them in your shell before running tests:
+The repository includes a full template at `.env.example` with every variable referenced by e2e tests.
 
 ```bash
-export FMG_E2E_HOST=https://your-fortimanager.example.com
-export FMG_E2E_TOKEN=your-api-token
-export FMG_E2E_USER=your-username
-export FMG_E2E_PASSWORD=your-password
-export FMG_E2E_ADOM=root
-export FMG_E2E_ADDRESS_NAME=existing-address-name
-export FMG_E2E_ADDRESS_METAFIELD_KEY=existing-address-metafield-key
-export FMG_E2E_ADDRESS_METAFIELD_VALUE=existing-address-metafield-value
-export FMG_E2E_ADDRESS_METAFIELD_VALUES=existing-address-metafield-value-1,existing-address-metafield-value-2
-export FMG_E2E_ADDRESS_NAME_IP_NETMASK_NAME=existing-address-name
-export FMG_E2E_ADDRESS_NAME_IP_NETMASK_IP=192.168.1.0
-export FMG_E2E_ADDRESS_NAME_IP_NETMASK_NETMASK=255.255.255.0
-export FMG_E2E_PKG=existing-package-name
-export FMG_E2E_POLICY_ID=1
-export FMG_E2E_POLICY_METAFIELD_KEY=existing-metafield-key
-export FMG_E2E_POLICY_METAFIELD_VALUE=existing-metafield-value
-export FMG_E2E_POLICY_METAFIELD_VALUES=existing-metafield-value-1,existing-metafield-value-2
-export FMG_E2E_SERVICE_NAME=existing-service-name
-export FMG_E2E_SERVICE_PROTOCOL=tcp
-export FMG_E2E_SERVICE_MIN_PORT=443
-export FMG_E2E_SERVICE_MAX_PORT=443
-export FMG_E2E_SERVICE_METAFIELD_KEY=existing-service-metafield-key
-export FMG_E2E_SERVICE_METAFIELD_VALUE=existing-service-metafield-value
-export FMG_E2E_SERVICE_METAFIELD_VALUES=existing-service-metafield-value-1,existing-service-metafield-value-2
-export FMG_E2E_SERVICE_NAMES=existing-service-name-1,existing-service-name-2
+cp .env.example .env
+# Edit .env with values from your FortiManager environment
 go test -tags=e2e ./...
 ```
 
-Or use inline environment variables:
+Environment variables used by e2e tests:
 
-```bash
-FMG_E2E_HOST=https://your-fortimanager.example.com FMG_E2E_TOKEN=your-api-token FMG_E2E_USER=your-username FMG_E2E_PASSWORD=your-password FMG_E2E_ADOM=root FMG_E2E_ADDRESS_NAME=existing-address-name FMG_E2E_ADDRESS_METAFIELD_KEY=existing-address-metafield-key FMG_E2E_ADDRESS_METAFIELD_VALUE=existing-address-metafield-value FMG_E2E_ADDRESS_METAFIELD_VALUES=existing-address-metafield-value-1,existing-address-metafield-value-2 FMG_E2E_ADDRESS_NAME_IP_NETMASK_NAME=existing-address-name FMG_E2E_ADDRESS_NAME_IP_NETMASK_IP=192.168.1.0 FMG_E2E_ADDRESS_NAME_IP_NETMASK_NETMASK=255.255.255.0 FMG_E2E_PKG=existing-package-name FMG_E2E_POLICY_ID=1 FMG_E2E_POLICY_METAFIELD_KEY=existing-metafield-key FMG_E2E_POLICY_METAFIELD_VALUE=existing-metafield-value FMG_E2E_POLICY_METAFIELD_VALUES=existing-metafield-value-1,existing-metafield-value-2 FMG_E2E_SERVICE_NAME=existing-service-name FMG_E2E_SERVICE_PROTOCOL=tcp FMG_E2E_SERVICE_MIN_PORT=443 FMG_E2E_SERVICE_MAX_PORT=443 FMG_E2E_SERVICE_METAFIELD_KEY=existing-service-metafield-key FMG_E2E_SERVICE_METAFIELD_VALUE=existing-service-metafield-value FMG_E2E_SERVICE_METAFIELD_VALUES=existing-service-metafield-value-1,existing-service-metafield-value-2 FMG_E2E_SERVICE_NAMES=existing-service-name-1,existing-service-name-2 go test -tags=e2e ./...
-```
+- `FMG_E2E_HOST`
+- `FMG_E2E_USER`
+- `FMG_E2E_PASSWORD`
+- `FMG_E2E_TOKEN`
+- `FMG_E2E_ADOM`
+- `FMG_E2E_ADDRESS_NAME`
+- `FMG_E2E_ADDRESS_NAMES`
+- `FMG_E2E_ADDRESS_METAFIELD_KEY`
+- `FMG_E2E_ADDRESS_METAFIELD_VALUE`
+- `FMG_E2E_ADDRESS_METAFIELD_VALUES`
+- `FMG_E2E_ADDRESS_NAME_IP_NETMASK_NAME`
+- `FMG_E2E_ADDRESS_NAME_IP_NETMASK_IP`
+- `FMG_E2E_ADDRESS_NAME_IP_NETMASK_NETMASK`
+- `FMG_E2E_PKG`
+- `FMG_E2E_POLICY_ID`
+- `FMG_E2E_POLICY_METAFIELD_KEY`
+- `FMG_E2E_POLICY_METAFIELD_VALUE`
+- `FMG_E2E_POLICY_METAFIELD_VALUES`
+- `FMG_E2E_SERVICE_NAME`
+- `FMG_E2E_SERVICE_PROTOCOL`
+- `FMG_E2E_SERVICE_MIN_PORT`
+- `FMG_E2E_SERVICE_MAX_PORT`
+- `FMG_E2E_SERVICE_NAMES`
+- `FMG_E2E_SERVICE_METAFIELD_KEY`
+- `FMG_E2E_SERVICE_METAFIELD_VALUE`
+- `FMG_E2E_SERVICE_METAFIELD_VALUES`
+- `FMG_E2E_GROUP_METAFIELD_KEY`
 
 ## Versioning
 
